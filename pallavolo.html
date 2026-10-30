@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pallavolo">
+<title>Segnapunti Pallavolo</title>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#ff7a1a">
+<link rel="apple-touch-icon" id="appicon" href="">
+<link rel="icon" id="favicon" href="">
+<style>
+:root[data-theme="dark"]{--bg:#0b1020;--bg2:#141b34;--card:#1b2444;--card2:#232e55;--text:#f1f5ff;--muted:#8b97c0;--line:#2d3a6b;--accent:#ff7a1a;--accent2:#ffb347;--a:#22d3ee;--b:#f472b6;--ok:#34d399;--bad:#f87171;--shadow:0 10px 30px rgba(0,0,0,.45)}
+:root[data-theme="light"]{--bg:#eef3ff;--bg2:#ffffff;--card:#ffffff;--card2:#f1f5ff;--text:#14213d;--muted:#64708f;--line:#d5def5;--accent:#ff6a00;--accent2:#ff9a3c;--a:#0891b2;--b:#db2777;--ok:#059669;--bad:#dc2626;--shadow:0 10px 30px rgba(40,60,120,.18)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:-apple-system,"SF Pro Rounded",Helvetica,sans-serif;background:radial-gradient(1200px 600px at 50% -10%,var(--bg2),var(--bg));color:var(--text);min-height:100vh;transition:background .3s,color .3s}
+button{font-family:inherit;cursor:pointer}
+.top{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;gap:8px;flex-wrap:wrap}
+.badge{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:800;padding:8px 16px;border-radius:999px;font-size:18px;box-shadow:var(--shadow)}
+.menu{display:flex;gap:6px;flex-wrap:wrap}
+.menu button{font-size:15px;padding:9px 13px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font-weight:600}
+.main{display:flex;gap:14px;padding:6px 14px 10px}
+.team{flex:1 1 0;min-width:0;background:var(--card);border-radius:24px;padding:14px;text-align:center;box-shadow:var(--shadow);border:1px solid var(--line);position:relative;overflow:hidden}
+.team::before{content:"";position:absolute;left:0;right:0;top:0;height:8px;background:var(--tc)}
+#t0{--tc:var(--a)}#t1{--tc:var(--b)}
+.team input.name{width:100%;font-size:26px;font-weight:800;text-align:center;background:transparent;border:0;border-bottom:2px dashed var(--line);color:var(--text);padding:6px;margin-top:6px}
+.sets{display:flex;justify-content:center;gap:8px;margin:10px 0;align-items:center;color:var(--muted);font-size:15px;font-weight:600}
+.setnum{font-size:54px;font-weight:900;color:var(--tc);line-height:1;min-width:48px;font-variant-numeric:tabular-nums}
+.setlbl{font-size:15px;font-weight:700;color:var(--muted)}
+.scorebtn{display:block;width:100%;background:var(--card2);border:2px solid var(--line);border-radius:22px;padding:6px 0;color:var(--text);transition:transform .08s,border-color .2s}
+.scorebtn:active{transform:scale(.97);border-color:var(--tc)}
+.score{font-size:clamp(70px,13vh,150px);font-weight:900;line-height:1.05;color:var(--tc);user-select:none;-webkit-user-select:none;font-variant-numeric:tabular-nums}
+.hint{font-size:13px;color:var(--muted);margin-top:-4px;padding-bottom:6px}
+.serve{height:30px;margin:10px 0 4px;font-size:16px;font-weight:800;color:var(--accent)}
+.serve span{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:5px 14px;border-radius:999px}
+.chip .qn{display:inline-block;min-width:20px;height:20px;line-height:20px;border-radius:50%;background:rgba(0,0,0,.28);font-style:normal;font-size:12px;text-align:center;margin-right:6px}
+.chip.dropchip{outline:3px solid var(--ok)}
+.bar{display:flex;gap:10px;padding:0 14px 16px}
+.bar button{flex:1;font-size:17px;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--text);font-weight:700}
+.overlay{position:fixed;inset:0;background:rgba(5,8,20,.72);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:9}
+.box{background:var(--card);color:var(--text);padding:22px;border-radius:22px;width:min(640px,94vw);max-height:90vh;overflow:auto;box-shadow:var(--shadow);border:1px solid var(--line)}
+.box h2{margin:0 0 10px}
+.box button{font-size:16px;padding:11px 16px;border-radius:12px;border:0;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;margin:6px 6px 0 0;font-weight:700}
+.box button.grey{background:var(--card2);color:var(--text);border:1px solid var(--line)}
+.box button.red{background:var(--bad)}
+.box input[type=text],.box input:not([type]){font-size:17px;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--text)}
+table{width:100%;border-collapse:collapse;margin:10px 0}
+th,td{padding:9px;border-bottom:1px solid var(--line);text-align:center}
+.row{display:flex;gap:8px;align-items:center;margin:6px 0}
+.row input.num{width:70px}.row input.nm{flex:1}
+.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.stat div{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center}
+.stat b{display:block;font-size:30px;color:var(--accent)}
+.stat span{color:var(--muted);font-size:13px}
+.tabs{margin-bottom:6px}
+.tabs button.grey{background:var(--card2);color:var(--text);border:1px solid var(--line)}
+.tabs button.on{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:0}
+.opt{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}
+.opt button{margin:0}
+.lbl{font-weight:800;margin-top:12px}
+.note{color:var(--muted);font-size:14px}
+.bench{margin-top:10px;padding:8px;border:2px dashed var(--line);border-radius:14px;text-align:left}
+.bench h4{margin:0 0 6px;font-size:13px;color:var(--muted);display:flex;justify-content:space-between}
+.chips{display:flex;gap:6px;flex-wrap:wrap;min-height:34px}
+.chip{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:800;padding:8px 12px;border-radius:999px;font-size:15px;touch-action:none;user-select:none;-webkit-user-select:none}
+.chip.sel{outline:3px solid var(--text)}
+.chip.off{background:var(--card2);color:var(--muted);border:1px solid var(--line)}
+.chip.ghost{position:fixed;z-index:50;pointer-events:none;opacity:.92;transform:translate(-50%,-50%);box-shadow:var(--shadow)}
+.tobtn{display:block;width:100%;margin-top:10px;font-size:17px;font-weight:800;padding:12px;border-radius:14px;border:2px solid var(--tcb,var(--tc));background:transparent;color:var(--tcb,var(--tc))}
+.tobtn:disabled{opacity:.35;border-color:var(--line);color:var(--muted)}
+.tobig{font-size:200px;font-weight:900;line-height:1;text-align:center;color:var(--accent);font-variant-numeric:tabular-nums}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--card);color:var(--text);border:1px solid var(--line);padding:12px 18px;border-radius:14px;box-shadow:var(--shadow);z-index:99;font-weight:700;display:none;max-width:90vw}
+.toast.bad{border-color:var(--bad);color:var(--bad)}
+.setdet{margin:14px 0 6px;padding-top:8px;border-top:1px solid var(--line);text-align:left}
+.setdet h3{margin:0 0 2px;font-size:18px}
+.run{display:flex;gap:8px;align-items:flex-start;margin:6px 0}
+.run>b{flex:0 0 96px;font-size:13px;padding-top:4px}
+.pt{display:inline-block;font-size:13px;font-weight:700;padding:2px 6px;margin:2px;border-radius:8px;color:#0b1020;border:1px solid var(--line);font-variant-numeric:tabular-nums}
+.pt.sd{outline:2px solid var(--text);outline-offset:1px;font-weight:900}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;border:1px solid var(--line);vertical-align:-1px}
+.box button.sw{width:38px;height:38px;padding:0;border-radius:50%;border:3px solid var(--line);margin:0}
+.box button.sw.on{border-color:var(--text)}
+.opt input[type=color]{width:44px;height:38px;border:0;padding:0;background:none}
+.score,.setnum{-webkit-text-stroke:var(--tcw,0) var(--tcs,transparent);paint-order:stroke fill}
+.mh{display:flex;flex-direction:column;align-items:center;gap:8px;margin:6px 0 12px}
+.mht{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;font-size:22px}
+.mhn{font-weight:800;border-bottom:5px solid var(--line);padding:0 2px}
+.sbox{display:flex;align-items:center;justify-content:center;border-radius:9px;flex:0 0 auto;border:1px solid var(--line)}
+.setcard{background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:12px;margin:10px 0;text-align:left}
+.setcard .sh{margin-bottom:8px;font-size:16px}
+.tlwrap{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start}
+.tlleft{display:flex;flex-direction:column}
+.tlscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;min-width:0}
+.tlin{display:inline-block;min-width:100%}
+.tlrow{display:flex;height:44px;align-items:center}
+.tlsep{height:2px;background:var(--muted);opacity:.6}
+.tc{flex:0 0 32px;display:flex;justify-content:center;align-items:center}
+.tl{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line)}
+.tl.sd{outline:2px solid var(--text);outline-offset:1px}
+.tlname{position:sticky;left:0;width:max-content;height:16px;line-height:16px;font-size:12px;font-weight:800;white-space:nowrap}
+.bw{--card:#fff;--card2:#fff;--line:#bbb;--text:#111;--muted:#444;background:#fff;color:#111;border-radius:14px;padding:8px 10px}
+.modes{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 8px}
+.modes button{margin:0}
+.cv{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:12px;margin:6px 0;font-size:17px}
+.cv input{width:26px;height:26px;flex:none}
+.cv.on{border-color:var(--ok)}
+.cv .cvn{min-width:34px;font-weight:700}
+.warnbox{border:2px solid var(--bad);border-radius:12px;padding:12px;margin:10px 0}
+.antab{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0}
+.antab th,.antab td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:center}
+.anwrap{overflow-x:auto}
+.box button.sm{padding:8px 11px;font-size:14px;margin:0 4px 0 0}
+
+/* ---- Campo disegnato sotto i punteggi ---- */
+:root[data-theme="dark"]{--zone:#1b3a50;--floor:#a8672f;--lc:#e9eff8}
+:root[data-theme="light"]{--zone:#2f6b8a;--floor:#d98e4e;--lc:#ffffff}
+.pitchwrap{margin:0 14px 10px}
+.pitch{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:10px 12px 12px;box-shadow:var(--shadow)}
+.plabels{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px;font-size:15px;font-weight:800;text-align:center}
+.plabels span{display:block;border-bottom:4px solid var(--tc);padding-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.zone{background:var(--zone);border-radius:14px;padding:18px 14px}
+.floor{display:flex;position:relative;border:3px solid var(--lc);background:var(--floor);background-image:repeating-linear-gradient(90deg,rgba(0,0,0,.05) 0 2px,transparent 2px 28px)}
+.hf{flex:1;min-width:0;display:grid;grid-template-rows:repeat(3,1fr);position:relative;padding:6px 0}
+.hf.h0{grid-template-columns:2fr 1fr}
+.hf.h1{grid-template-columns:1fr 2fr}
+.hf::before{content:"";position:absolute;top:0;bottom:0;border-left:3px solid var(--lc);pointer-events:none}
+.hf.h0::before{left:66.667%}
+.hf.h1::before{left:33.333%}
+.netc{flex:0 0 9px;margin:-14px -4px;position:relative;z-index:3;border:2px solid #fff;background:repeating-linear-gradient(0deg,rgba(255,255,255,.9) 0 2px,transparent 2px 7px),repeating-linear-gradient(90deg,rgba(255,255,255,.55) 0 1px,transparent 1px 4px),rgba(15,23,42,.45)}
+.netc::before,.netc::after{content:"";position:absolute;left:50%;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:#f1f5f9;border:3px solid #334155}
+.netc::before{top:-8px}
+.netc::after{bottom:-8px}
+.pos.tok{background:transparent;border:0;padding:0;border-radius:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative;min-width:0;cursor:pointer}
+.tok .disc{width:48px;height:48px;border-radius:50%;background:var(--tc);color:var(--tx,#fff);font-weight:900;font-size:22px;display:flex;align-items:center;justify-content:center;border:3px solid #fff;box-shadow:0 3px 7px rgba(0,0,0,.45);font-variant-numeric:tabular-nums;position:relative}
+.tok .disc.empty{background:rgba(255,255,255,.2);border:2px dashed rgba(255,255,255,.85);color:#fff;font-weight:700;box-shadow:none}
+.tok .tname{font-size:13px;font-weight:800;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);max-width:100%;padding:0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.15;min-height:15px}
+.tok .ovl{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px;border:0;cursor:pointer}
+.tok .dn{width:100%;height:100%;border:0;background:transparent;color:inherit;text-align:center;font:inherit;padding:0;outline:none;border-radius:50%}
+.tok.server .disc{box-shadow:0 0 0 4px var(--accent),0 3px 9px rgba(0,0,0,.55)}
+.pos.tok.drop .disc{box-shadow:0 0 0 5px var(--ok)}
+.ball{position:absolute;top:4px;right:-20px;width:26px;height:26px;z-index:2;filter:drop-shadow(0 2px 3px rgba(0,0,0,.55));pointer-events:none}
+.flyer{position:fixed;z-index:60;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:3px}
+@media (max-width:960px){.score{font-size:clamp(70px,13vw,110px)}}
+@media (max-height:860px){.hint{display:none}.serve{margin:4px 0 0;height:26px}.sets{margin:4px 0}.team input.name{font-size:22px;margin-top:2px}.tobtn{margin-top:6px;padding:9px}.half{margin-top:6px}.bench{margin-top:6px}.top{padding:8px 16px}.bar{padding-bottom:8px}.bar button{padding:11px}}
+/* Modalita' iPhone: squadre affiancate, tutto compatto. Si attiva da Impostazioni (data-layout="phone") */
+:root[data-layout="phone"] .top{padding:8px 10px}
+:root[data-layout="phone"] .badge{font-size:14px;padding:6px 12px}
+:root[data-layout="phone"] .menu button{font-size:12px;padding:7px 9px}
+:root[data-layout="phone"] .main{flex-direction:row;gap:8px;padding:4px 8px 8px}
+:root[data-layout="phone"] .team{padding:8px;border-radius:18px;min-width:0;flex:1 1 0}
+:root[data-layout="phone"] .team input.name{font-size:17px;padding:3px}
+:root[data-layout="phone"] .sets{margin:6px 0;gap:4px}
+:root[data-layout="phone"] .setnum{font-size:34px;min-width:30px}
+:root[data-layout="phone"] .setlbl{font-size:11px}
+:root[data-layout="phone"] .score{font-size:84px}
+:root[data-layout="phone"] .hint{display:none}
+:root[data-layout="phone"] .serve{height:24px;margin:6px 0 2px;font-size:12px}
+:root[data-layout="phone"] .tobtn{font-size:13px;padding:8px;margin-top:6px}
+:root[data-layout="phone"] .bench{padding:5px}
+:root[data-layout="phone"] .chip{font-size:12px;padding:6px 9px}
+:root[data-layout="phone"] .bar{padding:0 8px 12px;gap:6px}
+:root[data-layout="phone"] .bar button{font-size:13px;padding:11px}
+:root[data-layout="phone"] .tobig{font-size:130px}
+
+:root[data-layout="phone"] .pitchwrap{margin:0 8px 8px}
+:root[data-layout="phone"] .pitch{padding:6px 6px 8px;border-radius:16px}
+:root[data-layout="phone"] .zone{padding:14px 6px}
+:root[data-layout="phone"] .plabels{font-size:12px;gap:8px}
+:root[data-layout="phone"] .tok .disc{width:34px;height:34px;font-size:16px;border-width:2px}
+:root[data-layout="phone"] .tok .tname{font-size:9.5px;min-height:11px}
+:root[data-layout="phone"] .ball{width:19px;height:19px;top:2px;right:-14px}
+:root[data-layout="phone"] .hf{padding:3px 0}
+@media (max-height:860px){
+.team{padding:10px 12px}.team input.name{font-size:20px;padding:2px;margin-top:0}.sets{margin:2px 0}.setnum{font-size:40px}
+.score{font-size:clamp(60px,10.5vh,150px)}.scorebtn{padding:0}
+.serve{height:22px;margin:2px 0 0;font-size:14px}.serve span{padding:3px 12px}
+.tobtn{margin-top:4px;padding:7px;font-size:15px}
+.tok .disc{width:42px;height:42px;font-size:19px}.zone{padding:12px}.pitch{padding:6px 10px 8px}.plabels{margin-bottom:4px;font-size:13px}
+.bench{margin-top:6px;padding:5px 8px}.chip{padding:6px 10px;font-size:14px}.bench h4{margin-bottom:4px}
+.top{padding:6px 16px}.main{padding-top:2px}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="badge" id="title">Set 1</div>
+  <div class="menu">
+    <button onclick="openSettings()">Impostazioni</button>
+    <button onclick="openRoster()">Rosa</button>
+    <button onclick="openSquad()">Convocate</button>
+    <button onclick="openHistory()">Storico</button>
+    <button onclick="undo()">Annulla</button>
+    <button onclick="openSummary()">Riepilogo</button>
+    <button onclick="newMatch()">Nuova partita</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="team" id="t0"></div>
+  <div class="team" id="t1"></div>
+</div>
+
+<div class="pitchwrap" id="pitchwrap"></div>
+
+<div class="bar">
+  <button onclick="swapSides()">Cambio campo</button>
+  <button onclick="endSet(true)">Chiudi set manualmente</button>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="overlay" id="ov"><div class="box" id="box"></div></div>
+
+<script>
+const KEY='pallavolo_v3';
+const HKEY='pallavolo_storico_v2';
+const RKEY='pallavolo_rosa_v2';
+const TKEY='pallavolo_tema_v3';
+const LKEY='pallavolo_schermo_v4';
+let S, HIST=[], ROSTER=[];
+
+/* Impostazioni di partita:
+   bestOf = numero massimo di set (1, 3 o 5); i set da vincere sono (bestOf+1)/2.
+   lastTarget = punti dell'ultimo set possibile (15 o 25); gli altri set sono sempre a 25.
+   In tutti i set serve lo scarto di 2 punti. */
+function fresh(names,cfg,colors){
+  return {
+    names: names||['Casa','Ospiti'],
+    colors: colors||[null,null], // colore maglia di ogni squadra (null = colore predefinito del tema)
+    home:0,
+    cfg: cfg||{bestOf:5,lastTarget:15,playAll:false,showCourt:true,maxSubs:8},
+    subs:[[],[]], subLog:[], tos:[0,0], pl:[], sv0:null,
+    pts:[0,0], sets:[0,0], history:[], log:[], setNum:1, server:0,
+    lineup:[ ['','','','','',''], ['1','2','3','4','5','6'] ],
+    over:false, saved:false, date:new Date().toISOString()
+  };
+}
+
+function load(){
+  try{ S=JSON.parse(localStorage.getItem(KEY)) }catch(e){}
+  try{ HIST=JSON.parse(localStorage.getItem(HKEY))||[] }catch(e){ HIST=[] }
+  try{ ROSTER=JSON.parse(localStorage.getItem(RKEY))||[] }catch(e){ ROSTER=[] }
+  if(!S) S=fresh();
+  normRoster();
+  if(!Array.isArray(S.squad)) S.squad=ROSTER.map(p=>p.id); // prima volta: tutte convocate, come prima dell'aggiornamento
+  if(!S.tos) S.tos=[0,0];
+  if(!S.pl) S.pl=[];
+  if(!S.colors) S.colors=[null,null];
+  if(S.sv0===undefined) S.sv0=null;
+  if(!S.subs) S.subs=[[],[]];
+  if(S.cfg.maxSubs===undefined) S.cfg.maxSubs=8;
+  if(S.cfg.showCourt===undefined) S.cfg.showCourt=true;
+  if(S.cfg.playAll===undefined) S.cfg.playAll=false;
+  if(S.cfg.autoRot===undefined) S.cfg.autoRot=false;
+  if(!Array.isArray(S.bq)) S.bq=[];
+  setTheme(localStorage.getItem(TKEY)||'dark');
+  applyLayout();
+}
+function save(){ localStorage.setItem(KEY,JSON.stringify(S)) }
+/* Ogni giocatrice ha un id stabile: nome e numero si possono modificare senza perdere le convocazioni. */
+function normRoster(){
+  let ch=false;
+  ROSTER.forEach((p,i)=>{ if(!p.id){ p.id='p'+Date.now().toString(36)+i; ch=true } });
+  if(ch){ try{ saveRoster() }catch(e){} }
+}
+const LBL=['4','3','2','5','6','1']; // etichetta della posizione per indice di lineup
+function pstr(p){ return p.num+' '+p.name }
+function pool(){ return ROSTER.filter(p=>S.squad.includes(p.id)) }
+function saveHist(){ try{ localStorage.setItem(HKEY,JSON.stringify(HIST)) }catch(e){ try{ toast('Salvataggio non riuscito: Safari blocca la memoria in questa modalita\'.',true) }catch(_){} } }
+function saveRoster(){ localStorage.setItem(RKEY,JSON.stringify(ROSTER)) }
+
+function setTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  localStorage.setItem(TKEY,t);
+}
+
+/* Schermo: 'auto' sceglie da solo in base alla larghezza (sotto 600px = iPhone), oppure forzato 'pad' o 'phone'. */
+function layoutPref(){ return localStorage.getItem(LKEY)||'auto' }
+function applyLayout(){
+  const p=layoutPref();
+  const phone = p==='phone' || (p==='auto' && Math.min(screen.width,window.innerWidth)<600);
+  document.documentElement.setAttribute('data-layout',phone?'phone':'pad');
+}
+function setLayout(v){ localStorage.setItem(LKEY,v); applyLayout(); openSettings() }
+window.addEventListener('resize',applyLayout);
+
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
+
+function setsToWin(){ return (S.cfg.bestOf+1)/2 }
+/* Con 'playAll' (es. under 11) si giocano sempre tutti i set e vince chi ne ha di piu'.
+   Altrimenti la partita finisce quando una squadra raggiunge i set necessari. */
+function matchDecided(){
+  if(S.cfg.playAll) return S.log.length>=S.cfg.bestOf;
+  return S.sets[0]>=setsToWin() || S.sets[1]>=setsToWin();
+}
+function isLastSet(){ return S.setNum===S.cfg.bestOf }
+function target(){ return isLastSet()?S.cfg.lastTarget:25 }
+function setWon(t){
+  const a=S.pts[t], b=S.pts[1-t];
+  return a>=target() && a-b>=2;
+}
+
+/* Tap sul punteggio: +1 alla squadra che ha fatto punto.
+   Se non era al servizio, il servizio passa a lei e la formazione ruota in senso orario. */
+function point(t){
+  if(S.over) return;
+  S.history.push(JSON.stringify({pts:S.pts,server:S.server,lineup:S.lineup,subs:S.subs,bq:S.bq,pl:S.pl.length,sv0:S.sv0}));
+  if(S.pl.length===0){ S.sv0=S.server; S.ts=Date.now(); S.lu0=S.lineup[S.home].slice(); S.bq0=benchOf(S.home) } // chi batte all'inizio del set e a che ora
+  S.pts[t]++;
+  const side=(S.server!==t); // true = cambio palla: la squadra che segna prende la battuta
+  if(side){
+    S.server=t;
+    const l=S.lineup[t];
+    // senso orario: chi e' in pos. 2 passa a battere in pos. 1, la 1 va in 6, la 6 in 5, la 5 in 4, la 4 in 3, la 3 in 2
+    S.lineup[t]=[l[3],l[0],l[1],l[4],l[5],l[2]];
+    if(S.cfg.autoRot && t===S.home) autoRotate(t,l[2]);
+  }
+  S.pl.push({t:t,a:S.pts[0],b:S.pts[1],side:side});
+  if(setWon(t)) endSet(false,t);
+  save(); render();
+}
+
+/* Giro continuo (under 11): quando la squadra di casa conquista la battuta e gira, chi era in posizione 2
+   (quella che sarebbe passata a battere) esce in fondo alla panchina e al suo posto, in posizione 1 e in battuta,
+   entra la prima della panchina. Non conta come cambio. */
+function autoRotate(t,outV){
+  const bn=benchOf(t);
+  if(!outV || !bn.length) return;
+  const inV=bn[0];
+  S.lineup[t][5]=inV;
+  S.bq=bn.slice(1).concat(outV);
+  toast('Giro: entra '+inV.trim()+' in battuta, esce '+outV.trim());
+}
+function undo(){
+  if(!S.history.length) return;
+  const p=JSON.parse(S.history.pop());
+  S.pts=p.pts; S.server=p.server; S.lineup=p.lineup; if(p.subs) S.subs=p.subs; if(p.bq) S.bq=p.bq;
+  if(p.pl!==undefined){ S.pl=S.pl.slice(0,p.pl); S.sv0=(p.sv0===undefined?null:p.sv0) }
+  save(); render();
+}
+
+function endSet(manual,winner){
+  let w=winner;
+  if(manual||w===undefined){
+    if(S.over) return;
+    if(S.pts[0]===S.pts[1]){ alert('Punteggio in parita: impossibile chiudere il set.'); return }
+    w=S.pts[0]>S.pts[1]?0:1;
+  }
+  S.sets[w]++;
+  S.log.push({n:S.setNum,a:S.pts[0],b:S.pts[1],pl:S.pl,sv0:S.sv0,ts:S.ts||null,te:Date.now(),lu:S.lu0||null,bq:S.bq0||[],sb:subsOut(S.subs[S.home])});
+  if(matchDecided()){ finishMatch(); return }
+  S.setNum++; S.pts=[0,0]; S.history=[]; S.subs=[[],[]]; S.tos=[0,0]; S.pl=[]; S.sv0=null; S.ts=null; S.lu0=null; S.bq0=null; // cambi e timeout si azzerano a ogni set
+  S.server=w===0?1:0; // semplificazione: batte la squadra che non ha vinto il set
+  save(); render();
+}
+
+function finishMatch(){
+  S.over=true;
+  if(!S.saved){
+    S.saved=true;
+    const h=S.home;
+    HIST.unshift({
+      date:S.date,
+      home:S.names[h], away:S.names[1-h],
+      setsHome:S.sets[h], setsAway:S.sets[1-h],
+      bestOf:S.cfg.bestOf,
+      col:[S.colors[h],S.colors[1-h]],
+      squad:squadNames(), rot:!!S.cfg.autoRot,
+      // sv = chi batte per primo (0 = casa); pts = un numero per punto: (0 casa / 1 ospiti)*2 + (1 se e' cambio palla)
+      log:S.log.map(x=>({n:x.n,h:h===0?x.a:x.b,a:h===0?x.b:x.a,
+        sv:(x.sv0==null?null:(x.sv0===h?0:1)), ts:x.ts||null, te:x.te||null, lu:x.lu||null, bq:x.bq||[], sb:x.sb||[],
+        pts:(x.pl||[]).map(p=>((p.t===h?0:1)*2+(p.side?1:0)))}))
+    });
+    saveHist();
+  }
+  save(); render(); openSummary();
+}
+
+function swapSides(){
+  S.names.reverse(); S.pts.reverse(); S.sets.reverse(); S.lineup.reverse(); S.subs.reverse(); S.tos.reverse(); S.colors.reverse();
+  S.home=1-S.home;
+  S.server=1-S.server;
+  const fl=p=>({t:1-p.t,a:p.b,b:p.a,side:p.side});
+  S.log=S.log.map(x=>({n:x.n,a:x.b,b:x.a,sv0:(x.sv0==null?null:1-x.sv0),pl:(x.pl||[]).map(fl)}));
+  S.pl=S.pl.map(fl); if(S.sv0!=null) S.sv0=1-S.sv0;
+  S.history=[];
+  save(); render();
+}
+
+function newMatch(){
+  if(!S.over && (S.pts[0]||S.pts[1]||S.sets[0]||S.sets[1])){
+    if(!confirm('La partita in corso non e\' finita e NON verra\' salvata nello storico. Iniziare comunque una nuova partita?')) return;
+  }
+  const home=S.names[S.home], away=S.names[1-S.home];
+  const sq=S.squad; S=fresh([home,away],S.cfg,S.colors); S.squad=sq; save(); render();
+}
+
+/* ---------- Campo ---------- */
+function teamHTML(t){
+  return `
+    <input class="name" value="${esc(S.names[t])}" onchange="setName(${t},this.value)">
+    <div class="sets"><span class="setlbl">SET VINTI</span><span class="setnum">${S.sets[t]}</span>${t===S.home?'<span class="setlbl">&middot; CASA</span>':''}</div>
+    <button class="scorebtn" onclick="point(${t})"><div class="score">${S.pts[t]}</div><div class="hint">tocca per segnare il punto</div></button>
+    <div class="serve">${S.server===t?'<span>AL SERVIZIO</span>':''}</div>
+    <button class="tobtn" ${(S.over||toLeft(t)<=0)?'disabled':''} onclick="callTimeout(${t})">TIMEOUT (${toLeft(t)} su 2)</button>
+`;
+}
+/* Il campo visto dall'alto, con la rete in mezzo (tra i due pannelli): la squadra 0 a sinistra, la squadra 1 a destra.
+   Ogni squadra guarda la rete, quindi le posizioni sono specchiate come su un campo vero:
+   a sinistra davanti (vicino alla rete) 4-3-2 dall'alto in basso e dietro 5-6-1;
+   a destra davanti 2-3-4 e dietro 1-6-5. La battuta (pos. 1) e' dietro, in basso a sinistra o in alto a destra. */
+const IDX={'4':0,'3':1,'2':2,'5':3,'6':4,'1':5};
+const BALL='<svg class="ball" viewBox="0 0 24 24" aria-label="Palla"><circle cx="12" cy="12" r="11" fill="#fff" stroke="#111" stroke-width="1.4"/><path d="M12 1.2C12.6 6.5 16 10 22.6 11.4M12 1.2C11.4 6.5 8 10 1.4 11.4M3.2 19C7.5 17 10.5 14.2 12 11.8M20.8 19C16.5 17 13.5 14.2 12 11.8" fill="none" stroke="#111" stroke-width="1.3" stroke-linecap="round"/></svg>';
+/* Una giocatrice in campo: dischetto col colore della maglia e il numero, il nome sotto.
+   Per la squadra di casa con la rosa, un menu invisibile sopra il dischetto permette di scegliere chi gioca. */
+function tokHTML(t,label){
+  const i=IDX[label], cur=S.lineup[t][i]||'', srv=(S.server===t&&label==='1');
+  const col=teamColor(t), tx=textOn(col);
+  const m=/^\s*(\d+)\s*(.*)$/.exec(cur), num=m?m[1]:'', name=m?m[2]:cur.trim();
+  const attrs=`class="pos tok ${srv?'server':''}" style="--tc:${col};--tx:${tx}" data-t="${t}" data-i="${i}" ${cur?`data-k="${esc(cur)}"`:''} onclick="posTap(${t},${i})"`;
+  if(t===S.home && ROSTER.length && !pool().length){
+    return `<div class="pos tok" style="--tc:${col};--tx:${tx}" data-t="${t}" data-i="${i}" onclick="openSquad()"><div class="disc empty">+</div><div class="tname">convocate</div></div>`;
+  }
+  if(t===S.home && ROSTER.length){
+    const taken=S.lineup[t].filter((x,j)=>j!==i&&x);
+    const opts=['<option value="">-</option>'].concat(pool().map(p=>{
+      const v=pstr(p), tk=taken.includes(v);
+      return `<option value="${esc(v)}" ${v===cur?'selected':''} ${tk?'disabled':''}>${esc(v)}${tk?" (gia' in campo)":''}</option>`;
+    }));
+    if(cur && !pool().some(p=>pstr(p)===cur)) opts.push(`<option value="${esc(cur)}" selected>${esc(cur)}</option>`);
+    const shown=cur?(num||name.charAt(0).toUpperCase()):'+';
+    const lock=(selChip&&selChip.t===t)?'pointer-events:none':'';
+    return `<div ${attrs}><div class="disc ${cur?'':'empty'}">${srv?BALL:''}${esc(shown)}</div><div class="tname">${esc(cur?name:'scegli')}</div><select class="ovl" style="${lock}" aria-label="Posizione ${label}" onchange="setPlayer(${t},${i},this.value)">${opts.join('')}</select></div>`;
+  }
+  // avversari (o nessuna rosa): il numero si scrive direttamente nel dischetto
+  return `<div ${attrs}><div class="disc">${srv?BALL:''}<input class="dn" value="${esc(cur)}" aria-label="Posizione ${label}" onchange="setPlayer(${t},${i},this.value)"></div><div class="tname"></div></div>`;
+}
+/* Il campo visto dall'alto: a sinistra la squadra 0, a destra la squadra 1, rete solo in mezzo al campo.
+   Ogni squadra guarda la rete: a sinistra davanti 4-3-2 e dietro 5-6-1, a destra davanti 2-3-4 e dietro 1-6-5.
+   La riga di fondo e' nella zona dietro la linea dei 3 metri, quella davanti subito vicino alla rete. */
+function halfHTML(t){
+  const rows=t===0?[['5','4'],['6','3'],['1','2']]:[['2','1'],['3','6'],['4','5']];
+  return `<div class="hf h${t}">${rows.map(r=>r.map(l=>tokHTML(t,l)).join('')).join('')}</div>`;
+}
+function pitchHTML(){
+  const lab=t=>`<span style="--tc:${teamColor(t)}">${esc(S.names[t])}</span>`;
+  return `<div class="pitch"><div class="plabels">${lab(0)}${lab(1)}</div><div class="zone"><div class="floor">${halfHTML(0)}<div class="netc" title="Rete"></div>${halfHTML(1)}</div></div>${benchHTML(S.home)}</div>`;
+}
+/* ---- Animazione: i dischetti si spostano da una posizione all'altra (tecnica FLIP) ---- */
+function snapCourt(){
+  const m={tok:{},chip:{}};
+  document.querySelectorAll('.tok[data-k]').forEach(el=>{
+    const r=el.getBoundingClientRect();
+    m.tok[el.dataset.t+'|'+el.dataset.k]={x:r.left+r.width/2,y:r.top+r.height/2,l:r.left,tp:r.top,w:r.width,node:el.cloneNode(true)};
+  });
+  document.querySelectorAll('.chip[data-v]').forEach(el=>{
+    const r=el.getBoundingClientRect(); m.chip[el.dataset.t+'|'+el.dataset.v]={x:r.left+r.width/2,y:r.top+r.height/2};
+  });
+  return m;
+}
+const MOVE_MS=1000, MOVE_EASE='cubic-bezier(.4,0,.2,1)';
+function animateCourt(old){
+  if(!old||!document.querySelector('.tok')||!old.tok) return;
+  const seen={};
+  document.querySelectorAll('.tok[data-k]').forEach(el=>{
+    const key=el.dataset.t+'|'+el.dataset.k, r=el.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
+    seen[key]=1;
+    const o=old.tok[key];
+    if(o){
+      const dx=o.x-cx, dy=o.y-cy;
+      if(Math.abs(dx)>3||Math.abs(dy)>3){
+        el.style.zIndex=5;
+        el.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'translate(0,0)'}],{duration:MOVE_MS,easing:MOVE_EASE}).onfinish=()=>{ el.style.zIndex='' };
+      }
+    } else {
+      const c=old.chip[key];  // chi entra parte dal suo nome in panchina
+      if(c){
+        el.style.zIndex=6;
+        el.animate([{transform:`translate(${c.x-cx}px,${c.y-cy}px) scale(.5)`,opacity:.3},{transform:'translate(0,0) scale(1)',opacity:1}],{duration:MOVE_MS,easing:MOVE_EASE}).onfinish=()=>{ el.style.zIndex='' };
+      }
+    }
+  });
+  Object.keys(old.tok).forEach(key=>{  // chi esce vola verso la panchina
+    if(seen[key]) return;
+    const [t,k]=[key.split('|')[0],key.slice(key.indexOf('|')+1)];
+    const dest=Array.from(document.querySelectorAll('.chip[data-v]')).find(c=>c.dataset.t===t&&c.dataset.v===k);
+    if(!dest) return;
+    const o=old.tok[key], fl=o.node;
+    fl.querySelectorAll('select,input').forEach(x=>x.remove());
+    fl.className='tok flyer'; fl.style.left=o.l+'px'; fl.style.top=o.tp+'px'; fl.style.width=o.w+'px'; fl.style.margin='0';
+    document.body.appendChild(fl);
+    const r=dest.getBoundingClientRect();
+    fl.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${r.left+r.width/2-o.x}px,${r.top+r.height/2-o.y}px) scale(.45)`,opacity:.2}],{duration:MOVE_MS,easing:MOVE_EASE}).onfinish=()=>fl.remove();
+    setTimeout(()=>{ if(fl.parentNode) fl.remove() },MOVE_MS+300);
+  });
+}
+
+/* ---------- Sostituzioni (regole FIVB/FIPAV) ----------
+   - massimo S.cfg.maxSubs cambi per set (8 dal 2026, 6 con le regole precedenti)
+   - una coppia (A entra, B esce) puo' fare al massimo: B->A e poi il rientro A->B
+   - chi e' uscito puo' rientrare solo al posto di chi lo ha sostituito, e solo nello stesso set
+   - chi e' entrato puo' uscire solo per far rientrare chi aveva sostituito
+   S.subs[t] = elenco di coppie {out:'chi e' uscito', in:'chi e' entrato', done:false|true} */
+function toast(msg,bad){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast'+(bad?' bad':''); el.style.display='block';
+  clearTimeout(toast._t); toast._t=setTimeout(()=>{el.style.display='none'},3200);
+}
+function benchOf(t){
+  // la panchina esiste solo per la squadra di casa (e' l'unica con la rosa)
+  if(t!==S.home) return [];
+  const onCourt=S.lineup[t], all=pool().map(pstr).filter(v=>!onCourt.includes(v));
+  const q=(S.bq||[]).filter(v=>all.includes(v));
+  return q.concat(all.filter(v=>!q.includes(v))); // l'ordine scelto trascinando, poi le altre
+}
+function subsUsed(t){ return S.subs[t].length }
+function canSub(t,outV,inV){
+  if(S.over) return 'Partita terminata.';
+  if(!outV) return 'Scegli una posizione con una giocatrice.';
+  if(outV===inV) return 'Stessa giocatrice.';
+  if(subsUsed(t)>=S.cfg.maxSubs) return 'Cambi esauriti: massimo '+S.cfg.maxSubs+' per set.';
+  // chi esce era entrato per qualcuno? Allora puo' uscire solo per far rientrare quel titolare
+  const pairOut=S.subs[t].find(s=>s.in===outV && !s.done);
+  if(pairOut && pairOut.out!==inV) return outV+' puo\' uscire solo per far rientrare '+pairOut.out+'.';
+  // chi entra e' gia' uscito in questo set? Puo' rientrare solo al posto di chi lo ha sostituito
+  const pairIn=S.subs[t].find(s=>s.out===inV);
+  if(pairIn){
+    if(pairIn.done) return inV+' e\' gia\' rientrata in questo set: non puo\' piu\' cambiare.';
+    if(pairIn.in!==outV) return inV+' puo\' rientrare solo al posto di '+pairIn.in+'.';
+  }
+  return '';
+}
+function doSub(t,pos,inV){
+  const outV=S.lineup[t][pos];
+  const err=canSub(t,outV,inV);
+  if(err){ toast(err,true); return false }
+  S.history.push(JSON.stringify({pts:S.pts,server:S.server,lineup:S.lineup,subs:S.subs,bq:S.bq,pl:S.pl.length,sv0:S.sv0}));
+  const pairOut=S.subs[t].find(s=>s.in===outV && !s.done);
+  if(pairOut && pairOut.out===inV){
+    pairOut.done=true; // rientro: la coppia e' chiusa
+    S.subs[t].push({out:outV,in:inV,done:true,back:true});
+  } else {
+    S.subs[t].push({out:outV,in:inV,done:false});
+  }
+  const bn=benchOf(t), k=bn.indexOf(inV); // chi esce prende il posto in coda di chi entra
+  if(k>=0){ if(outV) bn[k]=outV; else bn.splice(k,1); S.bq=bn }
+  S.lineup[t][pos]=inV;
+  save(); render();
+  toast(inV+' entra al posto di '+outV+' (cambi: '+subsUsed(t)+'/'+S.cfg.maxSubs+')');
+  return true;
+}
+let selChip=null;
+function benchHTML(t){
+  if(t!==S.home || !ROSTER.length) return '';
+  const chips=benchOf(t).map((v,n)=>{
+    const st=S.subs[t].find(s=>s.out===v && !s.done);
+    const closed=S.subs[t].find(s=>s.out===v && s.done);
+    return `<span class="chip ${closed?'off':''} ${(selChip&&selChip.v===v)?'sel':''}" data-t="${t}" data-v="${esc(v)}" onpointerdown="chipDown(event)" title="${st?'Puo\' rientrare solo al posto di '+esc(st.in):''}"><i class="qn">${n+1}</i>${esc(v)}</span>`;
+  }).join('');
+  return `<div class="bench"><h4><span>${S.cfg.autoRot?'PANCHINA - ordine di ingresso (trascina)':'PANCHINA - trascina per cambiare o riordinare'}</span><span>Cambi ${subsUsed(t)}/${S.cfg.maxSubs}</span></h4><div class="chips">${chips||(pool().length?'<small class="note">Nessuna in panchina.</small>':'<small class="note">Nessuna convocata: tocca Convocate in alto e scegli chi gioca.</small>')}</div></div>`;
+}
+/* Trascinamento con il dito (pointer events): funziona su iPad senza librerie. */
+function chipDown(ev){
+  ev.preventDefault();
+  const el=ev.currentTarget, t=+el.dataset.t, v=el.dataset.v;
+  let moved=false, ghost=null, lastDrop=null, lastChip=null, lastX=0;
+  const sx=ev.clientX, sy=ev.clientY;
+  const move=e=>{
+    if(!moved && Math.hypot(e.clientX-sx,e.clientY-sy)<8) return;
+    if(!moved){ moved=true; ghost=el.cloneNode(true); ghost.classList.add('ghost'); document.body.appendChild(ghost) }
+    ghost.style.left=e.clientX+'px'; ghost.style.top=e.clientY+'px';
+    const under=document.elementFromPoint(e.clientX,e.clientY);
+    const pos=under&&under.closest?under.closest('.pos[data-t="'+t+'"]'):null;
+    if(lastDrop&&lastDrop!==pos) lastDrop.classList.remove('drop');
+    if(pos) pos.classList.add('drop');
+    lastDrop=pos;
+    const ch=under&&under.closest?under.closest('.chip[data-t="'+t+'"]'):null;
+    const tgt=(ch&&ch!==el)?ch:null;
+    if(lastChip&&lastChip!==tgt) lastChip.classList.remove('dropchip');
+    if(tgt) tgt.classList.add('dropchip');
+    lastChip=tgt; lastX=e.clientX;
+  };
+  const up=e=>{
+    window.removeEventListener('pointermove',move);
+    window.removeEventListener('pointerup',up);
+    window.removeEventListener('pointercancel',up);
+    if(ghost) ghost.remove();
+    if(lastDrop) lastDrop.classList.remove('drop');
+    if(lastChip) lastChip.classList.remove('dropchip');
+    if(moved){
+      if(lastChip){ const r=lastChip.getBoundingClientRect(); moveBench(t,v,lastChip.dataset.v,lastX>r.left+r.width/2) }
+      else if(lastDrop) doSub(t,+lastDrop.dataset.i,v);
+    } else {
+      // semplice tocco: seleziona la panchinara, poi tocca la titolare da sostituire
+      selChip=(selChip&&selChip.v===v)?null:{t,v};
+      render();
+      if(selChip) toast('Ora tocca la titolare da sostituire con '+v);
+    }
+  };
+  window.addEventListener('pointermove',move);
+  window.addEventListener('pointerup',up);
+  window.addEventListener('pointercancel',up);
+}
+function moveBench(t,v,target,after){
+  const bn=benchOf(t).filter(x=>x!==v);
+  let k=bn.indexOf(target); if(k<0) return;
+  bn.splice(after?k+1:k,0,v); S.bq=bn; save(); render();
+}
+function posTap(t,i){
+  if(selChip && selChip.t===t){ const v=selChip.v; selChip=null; doSub(t,i,v); }
+}
+
+/* ---------- Timeout: 2 per squadra per set, 30 secondi ---------- */
+let toTimer=null;
+function toLeft(t){ return 2-(S.tos[t]||0) }
+function callTimeout(t){
+  if(S.over) return;
+  if(toLeft(t)<=0){ toast('Timeout esauriti per questo set.',true); return }
+  S.tos[t]=(S.tos[t]||0)+1; save(); render();
+  let sec=30;
+  const draw=()=>showOv(`<h2>Timeout - ${esc(S.names[t])}</h2><div class="tobig">${sec}</div>
+    <p class="note" style="text-align:center">Timeout rimasti a ${esc(S.names[t])} in questo set: ${toLeft(t)}</p>
+    <button class="grey" onclick="endTimeout()">Chiudi timeout</button>`);
+  clearInterval(toTimer); draw();
+  toTimer=setInterval(()=>{
+    sec--;
+    if(sec<=0){ endTimeout(); try{ navigator.vibrate&&navigator.vibrate([300,100,300]) }catch(e){} return }
+    draw();
+  },1000);
+}
+function endTimeout(){ clearInterval(toTimer); toTimer=null; closeOv() }
+
+function setName(t,v){ S.names[t]=v.trim()||(t===S.home?'Casa':'Ospiti'); save(); render() }
+function setPlayer(t,i,v){
+  const k=String(v).trim().toLowerCase();
+  if(k){
+    const dup=S.lineup[t].findIndex((x,j)=>j!==i && String(x).trim().toLowerCase()===k);
+    if(dup>=0){ toast(String(v).trim()+' e\' gia\' in posizione '+LBL[dup]+': una giocatrice non puo\' stare in due posizioni.',true); render(); return }
+  }
+  S.lineup[t][i]=v; save(); render();
+}
+
+/* ---------- Colori delle maglie ----------
+   Il colore scelto tinge punteggio, set vinti, barra in alto e timeout della squadra.
+   Colori molto chiari (bianco) o molto scuri (nero) ricevono un contorno, cosi' restano leggibili su qualunque tema. */
+const DEFC={dark:['#22d3ee','#f472b6'],light:['#0891b2','#db2777']};
+function teamColor(t){
+  const th=document.documentElement.getAttribute('data-theme')==='light'?'light':'dark';
+  return (S.colors&&S.colors[t])||DEFC[th][t];
+}
+function hexLum(h){
+  const m=/^#?([0-9a-f]{6})$/i.exec(h||''); if(!m) return .5;
+  const n=parseInt(m[1],16), r=(n>>16&255)/255, g=(n>>8&255)/255, b=(n&255)/255;
+  return .2126*r+.7152*g+.0722*b;
+}
+function textOn(c){ return hexLum(c)>.55?'#0b1020':'#ffffff' }
+function applyColors(){
+  [0,1].forEach(t=>{
+    const el=document.getElementById('t'+t), c=S.colors&&S.colors[t];
+    ['--tc','--tcs','--tcw','--tcb'].forEach(p=>el.style.removeProperty(p));
+    if(!c) return;
+    el.style.setProperty('--tc',c);
+    const L=hexLum(c);
+    if(L>.82){ el.style.setProperty('--tcs','#0b1020'); el.style.setProperty('--tcw','2px'); el.style.setProperty('--tcb','var(--text)') }
+    else if(L<.12){ el.style.setProperty('--tcs','#ffffff'); el.style.setProperty('--tcw','2px'); el.style.setProperty('--tcb','var(--text)') }
+  });
+}
+
+function render(){
+  const snap=snapCourt();
+  applyColors();
+  document.getElementById('title').textContent=
+    S.over?'Partita terminata':'Set '+S.setNum+' di '+S.cfg.bestOf+' - a '+target();
+  document.getElementById('t0').innerHTML=teamHTML(0);
+  document.getElementById('t1').innerHTML=teamHTML(1);
+  const pw=document.getElementById('pitchwrap');
+  if(S.cfg.showCourt!==false){ pw.style.display=''; pw.innerHTML=pitchHTML() } else { pw.style.display='none'; pw.innerHTML='' }
+  animateCourt(snap);
+}
+
+/* ---------- Overlay ---------- */
+function showOv(html){ document.getElementById('box').innerHTML=html; document.getElementById('ov').style.display='flex' }
+function closeOv(){ ROSTDEL=-1; document.getElementById('ov').style.display='none'; render() }
+
+/* ---------- Impostazioni ---------- */
+/* Uso senza internet: il service worker (file sw.js) salva l'app nel dispositivo. */
+function offlineNote(){
+  const ok=('serviceWorker' in navigator)&&navigator.serviceWorker.controller;
+  return `<div class="lbl">Uso senza internet</div><p class="note">${ok?'<b>Pronto.</b> L\'app e\' salvata nel dispositivo e si apre anche senza rete.':'Non ancora pronto. Apri l\'app una volta con internet, chiudila e riaprila: qui deve comparire "Pronto".'}</p>`;
+}
+function openSettings(){
+  const th=document.documentElement.getAttribute('data-theme');
+  const started=S.pts[0]||S.pts[1]||S.sets[0]||S.sets[1];
+  const b=(on,label,fn)=>`<button class="${on?'':'grey'}" onclick="${fn}">${label}</button>`;
+  showOv(`<h2>Impostazioni</h2>
+    <div class="lbl">Tema</div>
+    <div class="opt">${b(th==='dark','Scuro',"setTheme('dark');openSettings()")}${b(th==='light','Chiaro',"setTheme('light');openSettings()")}</div>
+    <div class="lbl">Schermo</div>
+    <div class="opt">${b(layoutPref()==='auto','Automatico',"setLayout('auto')")}${b(layoutPref()==='pad','iPad',"setLayout('pad')")}${b(layoutPref()==='phone','iPhone',"setLayout('phone')")}</div>
+    ${colorRow(0)}${colorRow(1)}
+    <div class="lbl">Formato partita</div>
+    <div class="opt">${b(S.cfg.bestOf===5,'3 set su 5','setCfg(\'bestOf\',5)')}${b(S.cfg.bestOf===3,'2 set su 3 (under 11)','setCfg(\'bestOf\',3)')}${b(S.cfg.bestOf===1,'Set unico','setCfg(\'bestOf\',1)')}</div>
+    <div class="lbl">Punti dell'ultimo set</div>
+    <div class="opt">${b(S.cfg.lastTarget===15,'Fino a 15','setCfg(\'lastTarget\',15)')}${b(S.cfg.lastTarget===25,'Fino a 25','setCfg(\'lastTarget\',25)')}</div>
+    <div class="lbl">Cambi per set</div>
+    <div class="opt">${b(S.cfg.maxSubs===8,'8 (regole 2026)','setCfg(\'maxSubs\',8)')}${b(S.cfg.maxSubs===6,'6 (regole precedenti)','setCfg(\'maxSubs\',6)')}${b(S.cfg.maxSubs===99,'Illimitati','setCfg(\'maxSubs\',99)')}</div>
+    <div class="lbl">Giocatrici in campo</div>
+    <div class="opt">${b(S.cfg.showCourt!==false,'Mostra le sei posizioni','setCfg(\'showCourt\',true)')}${b(S.cfg.showCourt===false,'Nascondi (si gira con tutte)','setCfg(\'showCourt\',false)')}</div>
+    <div class="lbl">Giro continuo con panchina (under 11)</div>
+    <div class="opt">${b(!S.cfg.autoRot,'No, cambi a mano','setCfg(\'autoRot\',false)')}${b(S.cfg.autoRot,'Si, entrano in ordine','setCfg(\'autoRot\',true)')}</div>
+    <p class="note">Con il giro continuo, ogni volta che la squadra di casa conquista la battuta e gira, chi era in posizione 2 esce in fondo alla panchina e la prima della lista entra in posizione 1, in battuta. Non conta come cambio. L'ordine si decide trascinando i nomi in panchina.</p>
+    <div class="lbl">Giocare tutti i set</div>
+    <div class="opt">${b(!S.cfg.playAll,'No, finisce al set decisivo','setCfg(\'playAll\',false)')}${b(S.cfg.playAll,'Si, si giocano tutti (under 11)','setCfg(\'playAll\',true)')}</div>
+    ${offlineNote()}
+    <p class="note">In ogni set serve lo scarto di 2 punti. Gli altri set sono sempre a 25.${started?' Se cambi il formato a partita iniziata, le regole nuove valgono da subito.':''}</p>
+    <button class="grey" onclick="closeOv()">Chiudi</button>`);
+}
+const SWATCHES=[['Bianco','#f8fafc'],['Giallo','#facc15'],['Arancione','#fb923c'],['Rosso','#ef4444'],['Rosa','#f472b6'],['Viola','#a855f7'],['Blu','#2563eb'],['Azzurro','#22d3ee'],['Verde','#22c55e'],['Grigio','#9ca3af'],['Nero','#111827']];
+function colorRow(t){
+  const cur=S.colors[t];
+  const sw=SWATCHES.map(([n,c])=>`<button class="sw ${cur===c?'on':''}" title="${n}" aria-label="${n}" style="background:${c}" onclick="setColor(${t},'${c}')"></button>`).join('');
+  return `<div class="lbl">Colore maglia: ${esc(S.names[t])}</div>
+    <div class="opt">${sw}<input type="color" value="${teamColor(t)}" onchange="setColor(${t},this.value)"><button class="${cur?'grey':''}" onclick="setColor(${t},null)">Predefinito</button></div>`;
+}
+function setColor(t,c){ S.colors[t]=c; save(); render(); openSettings() }
+function setCfg(k,v){
+  S.cfg[k]=v; save();
+  // se cambiando formato i set vinti bastano gia' per chiudere la partita, la chiudiamo
+  if(!S.over && matchDecided()){ finishMatch(); return }
+  // se il set in corso ha gia' raggiunto il nuovo obiettivo con 2 di scarto, lo chiudiamo
+  if(!S.over){ for(const t of [0,1]){ if(setWon(t)){ endSet(false,t); return } } }
+  openSettings(); render();
+}
+
+/* ---------- Rosa ---------- */
+let ROSTDEL=-1;
+function openRoster(){
+  const rows=ROSTER.map((p,i)=>
+    `<div class="row"><input class="num" value="${esc(p.num)}" placeholder="N." onchange="editPlayer(${i},'num',this.value)">
+     <input class="nm" value="${esc(p.name)}" placeholder="Nome" onchange="editPlayer(${i},'name',this.value)">
+     <button class="red" onclick="delPlayer(${i})">${ROSTDEL===i?'Conferma?':'X'}</button></div>`).join('');
+  showOv(`<h2>Rosa giocatrici (squadra di casa)</h2>
+    ${rows||'<p>Nessuna giocatrice. Aggiungine una qui sotto.</p>'}
+    <div class="row"><input class="num" id="nn" placeholder="N."><input class="nm" id="nm" placeholder="Nome"><button onclick="addPlayer()">Aggiungi</button></div>
+    <p class="note">La rosa contiene tutte le giocatrici. Per modificare numero o nome scrivi direttamente nel campo. La X cancella la giocatrice (tocca una seconda volta su Conferma?).
+    Per ogni partita scegli chi gioca in <b>Convocate</b>: solo le convocate compaiono nel campo e in panchina.</p>
+    <button onclick="openSquad()">Scegli le convocate</button>
+    <button class="grey" onclick="closeOv()">Chiudi</button>`);
+}
+function addPlayer(){
+  const n=document.getElementById('nn').value.trim(), m=document.getElementById('nm').value.trim();
+  if(!n && !m) return;
+  if(ROSTER.some(q=>pstr(q)===n+' '+m)){ toast('Esiste gia\' una giocatrice con questo numero e nome.',true); return }
+  ROSTER.push({id:'p'+Date.now().toString(36)+ROSTER.length,num:n,name:m}); ROSTER.sort((a,b)=>(parseInt(a.num)||999)-(parseInt(b.num)||999));
+  saveRoster(); openRoster();
+}
+function editPlayer(i,k,v){
+  const p=ROSTER[i], old=pstr(p); v=v.trim();
+  const np=Object.assign({},p); np[k]=v; const ns=pstr(np);
+  if(ns!==old && ROSTER.some((q,j)=>j!==i&&pstr(q)===ns)){ toast('Esiste gia\' una giocatrice con questo numero e nome.',true); openRoster(); return }
+  p[k]=v;
+  if(ns!==old){
+    const hm=S.home; // nella partita in corso aggiorno campo e cambi con il nuovo nome
+    S.lineup[hm]=S.lineup[hm].map(x=>x===old?ns:x);
+    S.bq=(S.bq||[]).map(x=>x===old?ns:x);
+    S.subs[hm].forEach(s=>{ if(s.out===old) s.out=ns; if(s.in===old) s.in=ns });
+    save();
+  }
+  saveRoster();
+}
+function delPlayer(i){
+  if(ROSTDEL!==i){ ROSTDEL=i; openRoster(); return }
+  ROSTDEL=-1;
+  const p=ROSTER[i]; if(!p) return; const v=pstr(p);
+  ROSTER.splice(i,1); S.squad=S.squad.filter(id=>id!==p.id);
+  let out=false; S.lineup[S.home]=S.lineup[S.home].map(x=>{ if(x===v){ out=true; return '' } return x });
+  saveRoster(); save(); openRoster(); render();
+  if(out) toast(v.trim()+' era in campo: la posizione e\' ora vuota.');
+}
+/* Convocate: le giocatrici della rosa che giocano questa partita. Solo loro si possono mettere in campo. */
+function openSquad(){
+  const onCourt=S.lineup[S.home];
+  const rows=ROSTER.map(p=>{
+    const on=S.squad.includes(p.id), inCourt=onCourt.includes(pstr(p));
+    return `<label class="cv ${on?'on':''}"><input type="checkbox" ${on?'checked':''} onchange="toggleSquad('${p.id}',this.checked)"><span class="cvn">${esc(p.num)}</span><span>${esc(p.name)}</span>${inCourt?'<small class="note">in campo</small>':''}</label>`;
+  }).join('');
+  showOv(`<h2>Convocate per la partita</h2>
+    ${ROSTER.length?`<p class="note">Spunta le giocatrici della rosa che giocano oggi. Convocate: <b>${pool().length}</b> su ${ROSTER.length}. I nomi finiscono nel PDF. Una giocatrice in campo non si puo' togliere finche' non esce.</p>${rows}
+    <button class="grey" onclick="squadAll()">Tutte</button><button class="grey" onclick="squadNone()">Nessuna</button>`
+    :'<p>La rosa e\' vuota. Aggiungi prima le giocatrici in Rosa.</p><button onclick="openRoster()">Apri la rosa</button>'}
+    <button onclick="closeOv()">Fatto</button>`);
+}
+function toggleSquad(id,on){
+  const p=ROSTER.find(q=>q.id===id); if(!p) return;
+  if(!on && S.lineup[S.home].includes(pstr(p))){ toast(pstr(p).trim()+' e\' in campo: falla uscire prima.',true); openSquad(); return }
+  S.squad=S.squad.filter(x=>x!==id); if(on) S.squad.push(id);
+  save(); openSquad();
+}
+function squadAll(){ S.squad=ROSTER.map(p=>p.id); save(); openSquad() }
+function squadNone(){ S.squad=ROSTER.filter(p=>S.lineup[S.home].includes(pstr(p))).map(p=>p.id); save(); openSquad() }
+
+/* ---------- Riepilogo ---------- */
+function summaryTable(){
+  const rows=S.log.map(x=>`<tr><td>Set ${x.n}</td><td>${x.a}</td><td>${x.b}</td></tr>`).join('');
+  return `<table><tr><th></th><th>${esc(S.names[0])}</th><th>${esc(S.names[1])}</th></tr>${rows}
+    <tr><th>Set vinti</th><th>${S.sets[0]}</th><th>${S.sets[1]}</th></tr></table>`;
+}
+/* Turni di battuta di un set: ogni turno inizia col punto del cambio palla e continua finche' la stessa squadra segna. */
+function runsOf(x){
+  let cur={sv:x.sv0,pts:[]}; const runs=[cur];
+  (x.pl||[]).forEach(p=>{
+    if(p.side){ cur={sv:p.t,pts:[p]}; runs.push(cur) }
+    else cur.pts.push(p);
+  });
+  return runs.filter(r=>r.pts.length>0);
+}
+/* Cifre a sette segmenti (stile tabellone), disegnate in SVG: nessun font esterno. */
+const SEGS={0:'abcdef',1:'bc',2:'abdeg',3:'abcdg',4:'bcfg',5:'acdfg',6:'acdefg',7:'abc',8:'abcdefg',9:'abcdfg'};
+const SEGR={a:[2,0,8,2],g:[2,9,8,2],d:[2,18,8,2],f:[0,2,2,7],b:[10,2,2,7],e:[0,11,2,7],c:[10,11,2,7]};
+function seg(n,color,h){
+  const ds=String(n).split('');
+  const w=ds.length*15-3;
+  const body=ds.map((d,i)=>(SEGS[d]||'').split('').map(s=>{ const r=SEGR[s]; return `<rect x="${r[0]+i*15}" y="${r[1]}" width="${r[2]}" height="${r[3]}" rx="0.8" fill="${color}"/>` }).join('')).join('');
+  return `<svg viewBox="0 0 ${w} 20" width="${Math.round(w*h/20)}" height="${h}" aria-hidden="true">${body}</svg>`;
+}
+/* Modalita' del riepilogo: 'col' = colori scelti per le squadre, 'bw' = nero su bianco (adatto alla stampa). */
+let RMODE=(function(){ try{ return localStorage.getItem('pallavolo_riepilogo_v1')||'col' }catch(e){ return 'col' } })();
+let rerender=function(){};
+function setRMode(m){ RMODE=m; try{ localStorage.setItem('pallavolo_riepilogo_v1',m) }catch(e){} rerender() }
+function modesHTML(){
+  const mb=(m,l)=>`<button class="${RMODE===m?'':'grey'}" onclick="setRMode('${m}')">${l}</button>`;
+  return `<div class="modes">${mb('bw','Bianco e nero')}${mb('col','Colori squadra')}</div>`;
+}
+/* Un "modello" descrive una partita: {names, cols, sets:[{n,a,b,pl,sv0,live}], won:[x,y], date}.
+   Lo costruiamo sia dalla partita in corso sia dalle partite dello storico. */
+function liveModel(){
+  const sets=S.log.slice();
+  if(!S.over && S.pl.length) sets.push({n:S.setNum,a:S.pts[0],b:S.pts[1],pl:S.pl,sv0:S.sv0,ts:S.ts||null,te:null,live:true,lu:S.lu0||null,bq:S.bq0||[],sb:subsOut(S.subs[S.home])});
+  return {names:S.names,cols:S.colors,sets:sets,won:S.sets,date:S.date,squad:pool().map(pstr),rt:S.home,rot:!!S.cfg.autoRot};
+}
+function matchModel(m){
+  const sets=m.log.map(x=>{
+    let a=0,b=0;
+    const pl=(x.pts||[]).map(c=>{ const t=c>>1; if(t===0) a++; else b++; return {t:t,a:a,b:b,side:!!(c&1)} });
+    return {n:x.n,a:x.h,b:x.a,pl:pl,sv0:(x.sv===undefined?null:x.sv),ts:x.ts||null,te:x.te||null,lu:x.lu||null,bq:x.bq||[],sb:x.sb||[]};
+  });
+  return {names:[m.home,m.away],cols:m.col||[null,null],sets:sets,won:[m.setsHome,m.setsAway],date:m.date,squad:m.squad||[],rt:0,rot:!!m.rot};
+}
+function mcol(M,t){
+  const th=document.documentElement.getAttribute('data-theme')==='light'?'light':'dark';
+  return (M.cols&&M.cols[t])||DEFC[th][t];
+}
+function tc(M,t){ return RMODE==='bw'?(t?'#ffffff':'#111111'):mcol(M,t) } // in nero su bianco: prima squadra piena, seconda vuota col bordo
+function bwb(){ return RMODE==='bw'?'border:2px solid #111;':'' }
+function sbox(n,c,h,sz){ return `<span class="sbox" style="background:${c};width:${sz}px;height:${sz}px;${bwb()}">${seg(n,textOn(c),h)}</span>` }
+function hm(ms){ return new Date(ms).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}) }
+function mins(a,b){ return Math.max(1,Math.round((b-a)/60000)) }
+/* Orari della partita: inizio = primo punto del primo set, fine = chiusura dell'ultimo set. */
+function timesOf(M){
+  const withTs=M.sets.filter(x=>x.ts), withTe=M.sets.filter(x=>x.te);
+  const st=withTs.length?withTs[0].ts:null;
+  const en=(withTe.length&&!M.sets.some(x=>x.live))?withTe[withTe.length-1].te:null;
+  return {st:st,en:en,dur:(st&&en)?mins(st,en):null};
+}
+function timeLine(M){
+  const T=timesOf(M);
+  return T.st?('inizio '+hm(T.st)+(T.en?' | fine '+hm(T.en)+' | durata '+T.dur+' min':' | in corso')):'';
+}
+function headerHTML(M){
+  const d=new Date(M.date);
+  const tl=timeLine(M);
+  const dt=d.toLocaleDateString('it-IT')+(tl?' | '+tl:' '+d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}));
+  const nm=t=>`<span class="mhn" style="border-color:${RMODE==='bw'?'#111':mcol(M,t)}">${esc(M.names[t])}</span>`;
+  return `<div class="mh"><div class="note">${dt}</div><div class="mht">${nm(0)}${sbox(M.won[0],tc(M,0),26,44)}<b>-</b>${sbox(M.won[1],tc(M,1),26,44)}${nm(1)}</div></div>`;
+}
+/* Cronologia di ogni set: una riga per squadra (col nome), un quadratino per ogni punto col suo numero progressivo,
+   in ordine di gioco da sinistra a destra. Il bordo marcato e' il cambio palla. */
+function detailHTML(M){
+  const withData=M.sets.filter(x=>x.pl&&x.pl.length);
+  if(!withData.length) return '<p class="note">La cronologia punto per punto compare dai punti segnati da ora in poi.</p>';
+  const legend=`<p class="note">Ogni quadratino e' un punto, col numero progressivo della squadra che ha segnato, in ordine di gioco. Il bordo marcato indica il cambio palla: quella squadra prende la battuta. Scorri di lato se il set e' lungo.</p>`;
+  const lab=t=>`<div class="tlname"><span class="dot" style="background:${tc(M,t)};${bwb()}"></span>${esc(M.names[t])}</div>`;
+  const cards=withData.map(x=>{
+    const cambi=x.pl.filter(p=>p.side).length;
+    const cell=(p,t)=>`<span class="tc">${p.t===t?`<span class="tl ${p.side?'sd':''}" style="background:${tc(M,t)};${bwb()}">${seg(t?p.b:p.a,textOn(tc(M,t)),14)}</span>`:''}</span>`;
+    const row=t=>`<div class="tlrow">${x.pl.map(p=>cell(p,t)).join('')}</div>`;
+    return `<div class="setcard"><div class="sh"><b>Set ${x.n}${x.live?' (in corso)':''}</b> <span class="note">| batte per primo: ${esc(M.names[x.sv0])} | cambi palla: ${cambi}${x.ts&&x.te?' | '+hm(x.ts)+'-'+hm(x.te)+' ('+mins(x.ts,x.te)+' min)':''}</span></div>
+      <div class="tlwrap"><div class="tlleft"><div style="height:16px"></div>${sbox(x.a,tc(M,0),24,44)}<div style="height:2px"></div>${sbox(x.b,tc(M,1),24,44)}<div style="height:16px"></div></div>
+      <div class="tlscroll"><div class="tlin">${lab(0)}${row(0)}<div class="tlsep"></div>${row(1)}${lab(1)}</div></div></div></div>`;
+  }).join('');
+  return legend+cards;
+}
+/* Formazione iniziale (posizioni 1-6) e cambi di un set, come testo. */
+function formazione(x){
+  if(!x.lu||!x.lu.some(v=>String(v).trim())) return '';
+  return [5,2,1,0,3,4].map((idx,k)=>'P'+(k+1)+': '+(String(x.lu[idx]||'').trim()||'-')).join('  ');
+}
+function panchinaTxt(M,x){ return (M.rot?'Panchina a inizio set (ordine di ingresso nel giro): ':'Panchina a inizio set: ')+x.bq.map(v=>String(v).trim()).join(', ') }
+function cambiTxt(x){ return (x.sb||[]).map(s=>s.o+' > '+s.i+(s.b?' (rientro)':'')).join('; ') }
+function squadHTML(M){
+  const sq=M.squad||[]; const sets=M.sets.filter(x=>formazione(x)||(x.sb&&x.sb.length)||(x.bq&&x.bq.length));
+  if(!sq.length&&!sets.length) return '';
+  const rn=M.names[M.rt||0];
+  return `<h3 style="margin:14px 0 2px">Convocate (${esc(rn)})</h3>
+    <p>${sq.length?sq.map(esc).join(', '):'<span class="note">Non registrate.</span>'}</p>`+
+    sets.map(x=>`<p class="note"><b>Set ${x.n}</b> - Formazione iniziale: ${esc(formazione(x)||'-')}${(x.bq&&x.bq.length)?'<br>'+esc(panchinaTxt(M,x)):''}${(x.sb&&x.sb.length)?'<br>Cambi: '+esc(cambiTxt(x)):''}</p>`).join('');
+}
+/* Analisi di una partita: per ogni set cambi palla, serie di punti consecutivi piu' lunga e massimo vantaggio. */
+function setStats(x){
+  const best=[0,0], lead=[0,0]; let cur=-1,len=0;
+  x.pl.forEach(p=>{
+    if(p.t===cur) len++; else { cur=p.t; len=1 }
+    if(len>best[p.t]) best[p.t]=len;
+    const d=p.a-p.b; if(d>lead[0]) lead[0]=d; if(-d>lead[1]) lead[1]=-d;
+  });
+  return {best:best,lead:lead,cambi:x.pl.filter(p=>p.side).length};
+}
+function analysisHTML(M){
+  const ds=M.sets.filter(x=>x.pl&&x.pl.length);
+  if(!ds.length) return '';
+  const tot={best:[0,0],lead:[0,0],cambi:0,punti:0};
+  const rows=ds.map(x=>{
+    const s=setStats(x);
+    tot.cambi+=s.cambi; tot.punti+=x.pl.length;
+    [0,1].forEach(t=>{ if(s.best[t]>tot.best[t]) tot.best[t]=s.best[t]; if(s.lead[t]>tot.lead[t]) tot.lead[t]=s.lead[t] });
+    return `<tr><td>Set ${x.n}</td><td>${x.a}-${x.b}</td><td>${s.cambi}</td><td>${s.best[0]} - ${s.best[1]}</td><td>${s.lead[0]} - ${s.lead[1]}</td></tr>`;
+  }).join('');
+  return `<h3 style="margin:14px 0 2px">Analisi</h3>
+    <p class="note">Serie = punti consecutivi della stessa squadra. Vantaggio = massimo scarto in punti. Coppie nell'ordine ${esc(M.names[0])} - ${esc(M.names[1])}.</p>
+    <div class="anwrap"><table class="antab"><tr><th></th><th>Punti</th><th>Cambi palla</th><th>Serie max</th><th>Vantaggio max</th></tr>${rows}
+    <tr><th>Totale</th><th>${tot.punti}</th><th>${tot.cambi}</th><th>${tot.best[0]} - ${tot.best[1]}</th><th>${tot.lead[0]} - ${tot.lead[1]}</th></tr></table></div>`;
+}
+function openSummary(){
+  rerender=openSummary;
+  const d=new Date(S.date).toLocaleString('it-IT');
+  const mb=(m,l)=>`<button class="${RMODE===m?'':'grey'}" onclick="setRMode('${m}')">${l}</button>`;
+  showOv(`<h2>Riepilogo partita</h2><div class="modes">${mb('bw','Bianco e nero')}${mb('col','Colori squadra')}</div><div class="${RMODE==='bw'?'bw':''}">${headerHTML(liveModel())}${detailHTML(liveModel())}${analysisHTML(liveModel())}${squadHTML(liveModel())}</div>
+    ${S.over?'':'<p class="note">Partita ancora in corso: entra nello storico solo quando termina.</p>'}
+    <button onclick="sharePDF()">Condividi PDF</button>
+    <button onclick="shareText()">Invia testo (WhatsApp)</button>
+    <button class="grey" onclick="closeOv()">Chiudi</button>`);
+}
+
+/* ---------- Storico e statistiche ---------- */
+let histTab='stat';
+function openHistory(){
+  const t=(id,l)=>`<button class="${histTab===id?'on':'grey'}" onclick="histTab='${id}';DELARM=-1;RESETARM=false;openHistory()">${l}</button>`;
+  const tabs=`<div class="tabs">${t('stat','Statistiche')}${t('list','Partite')}${t('bk','Backup')}</div>`;
+  let body='';
+  if(histTab==='stat') body=statsHTML();
+  else if(histTab==='list') body=listHTML();
+  else body=backupHTML();
+  showOv(`<h2>Storico</h2>${tabs}${body}<button class="grey" onclick="closeOv()">Chiudi</button>`);
+}
+function statsHTML(){
+  if(!HIST.length) return '<p>Nessuna partita nello storico. Le partite vengono salvate quando finiscono.</p>';
+  let w=0,l=0,sw=0,sl=0,pf=0,ps=0;
+  HIST.forEach(m=>{
+    if(m.setsHome>m.setsAway) w++; else l++;
+    sw+=m.setsHome; sl+=m.setsAway;
+    m.log.forEach(x=>{ pf+=x.h; ps+=x.a });
+  });
+  const tot=HIST.length, pct=Math.round(w/tot*100);
+  const box=(v,t)=>`<div><b>${v}</b><span>${t}</span></div>`;
+  return `<p class="note">Dal punto di vista della squadra di casa, su ${tot} partite.</p><div class="stat">
+    ${box(w,'Vittorie')}${box(l,'Sconfitte')}${box(pct+'%','% vittorie')}
+    ${box(sw,'Set vinti')}${box(sl,'Set persi')}${box(sw-sl,'Differenza set')}
+    ${box(pf,'Punti fatti')}${box(ps,'Punti subiti')}${box(pf-ps,'Differenza punti')}</div>`;
+}
+function listHTML(){
+  if(!HIST.length) return '<p>Nessuna partita nello storico.</p>';
+  const rows=HIST.map((m,i)=>{
+    const d=new Date(m.date).toLocaleDateString('it-IT');
+    const det=m.log.map(x=>x.h+'-'+x.a).join(', ');
+    const won=m.setsHome>m.setsAway;
+    return `<tr><td>${d}</td><td>${esc(m.home)} - ${esc(m.away)}<br><small class="note">${det}</small></td>
+      <td style="color:${won?'var(--ok)':'var(--bad)'}"><b>${m.setsHome}-${m.setsAway}</b></td>
+      <td style="white-space:nowrap"><button class="sm" onclick="openMatch(${i})">Analizza</button><button class="red sm" onclick="delMatch(${i})">${DELARM===i?'Conferma?':'X'}</button></td></tr>`;
+  }).join('');
+  return `<table>${rows}</table>
+    <p class="note">Tocca Analizza per rivedere la cronologia punto per punto. Le partite salvate prima di questo aggiornamento hanno solo i punteggi dei set.</p>
+    ${resetBoxHTML()}`;
+}
+/* Apre il dettaglio di una partita dello storico: cronologia dei punti e analisi. */
+function openMatch(i){
+  const m=HIST[i]; if(!m) return;
+  rerender=function(){ openMatch(i) };
+  const M=matchModel(m);
+  const has=M.sets.some(s=>s.pl.length);
+  const body=has?detailHTML(M)+analysisHTML(M)+squadHTML(M)
+    :`<p class="note">Questa partita e' stata salvata prima dell'aggiornamento: ci sono solo i punteggi dei set, senza la cronologia punto per punto.</p>
+       <table>${M.sets.map(x=>`<tr><td>Set ${x.n}</td><td>${x.a}</td><td>${x.b}</td></tr>`).join('')}</table>`;
+  showOv(`<h2>Partita analizzata</h2>${has?modesHTML():''}<div class="${has&&RMODE==='bw'?'bw':''}">${headerHTML(M)}${body}</div>
+    <button onclick="sharePDFof(${i})">Condividi PDF</button>
+    <button class="grey" onclick="openHistory()">Torna allo storico</button>`);
+}
+/* Cancella tutto lo storico (la rosa resta). Conferma dentro l'app: le finestre confirm() di Safari
+   possono essere bloccate e il pulsante sembrava "non fare nulla". */
+let RESETARM=false, DELARM=-1;
+function resetBoxHTML(){
+  if(RESETARM) return `<div class="warnbox"><b>Cancellare TUTTO lo storico (${HIST.length} partite)?</b><br><span class="note">Non si puo' annullare. Se vuoi tenerlo, fai prima un backup nella scheda Backup.</span><br>
+    <button class="red" onclick="doReset()">Si, cancella tutto</button><button class="grey" onclick="RESETARM=false;openHistory()">Annulla</button></div>`;
+  return `<button class="red" onclick="RESETARM=true;DELARM=-1;openHistory()">Azzera storico</button>`;
+}
+function doReset(){
+  RESETARM=false; HIST=[]; saveHist(); histTab='list'; openHistory(); toast('Storico azzerato.');
+}
+function resetHistory(){ RESETARM=true; openHistory() }
+function delMatch(i){ if(DELARM!==i){ DELARM=i; RESETARM=false; openHistory(); return } DELARM=-1; HIST.splice(i,1); saveHist(); openHistory() }
+
+/* ---------- Backup ---------- */
+function backupHTML(){
+  return `<p class="note">I dati sono salvati nella memoria di Safari. Se cancelli i dati del sito li perdi: fai ogni tanto un backup.</p>
+    <button onclick="exportBackup()">Esporta backup</button>
+    <button onclick="document.getElementById('imp').click()">Importa backup</button>
+    <input type="file" id="imp" accept=".json,application/json" style="display:none" onchange="importBackup(this)">
+    <p class="note" style="margin-top:18px">Cancella tutto lo storico delle partite. La rosa non viene toccata.</p>
+    ${resetBoxHTML()}`;
+}
+async function exportBackup(){
+  const data=JSON.stringify({v:3,hist:HIST,roster:ROSTER,names:S.names},null,1);
+  const file=new File([data],'pallavolo-backup.json',{type:'application/json'});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file],title:'Backup pallavolo'}); return }catch(e){ if(e.name==='AbortError') return }
+  }
+  window.open(URL.createObjectURL(file),'_blank');
+}
+function importBackup(inp){
+  const f=inp.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const d=JSON.parse(r.result);
+      if(!Array.isArray(d.hist)||!Array.isArray(d.roster)) throw 0;
+      HIST=d.hist; ROSTER=d.roster; normRoster(); S.squad=ROSTER.map(p=>p.id); save(); saveHist(); saveRoster(); openHistory(); toast('Backup importato.');
+    }catch(e){ toast('File di backup non valido.',true) }
+  };
+  r.readAsText(f);
+}
+
+/* ---------- PDF fatto a mano, senza librerie (funziona offline) ---------- */
+function squadNames(){
+  const set=new Set(pool().map(pstr));
+  S.log.forEach(x=>{ (x.lu||[]).forEach(v=>{ if(String(v).trim()) set.add(v) }); (x.sb||[]).forEach(s=>{ set.add(s.o); set.add(s.i) }) });
+  return Array.from(set).sort((a,b)=>(parseInt(a)||999)-(parseInt(b)||999));
+}
+function subsOut(a){ return (a||[]).map(s=>({o:s.out,i:s.in,b:!!s.back})) }
+function pdfEsc(s){ return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\x20-\x7E]/g,'?').replace(/[\\()]/g,'\\$&') }
+function pdfRGB(hex){
+  let m=/^#?([0-9a-f]{6})$/i.exec(String(hex||''));
+  if(!m){ const s=/^#?([0-9a-f]{3})$/i.exec(String(hex||'')); if(s) m=[0,s[1].split('').map(c=>c+c).join('')] }
+  if(!m) return [0,0,0];
+  const n=parseInt(m[1],16); return [(n>>16)/255,((n>>8)&255)/255,(n&255)/255];
+}
+function pdfBuild(pages){
+  const objs=[];
+  objs.push('<< /Type /Catalog /Pages 2 0 R >>');
+  objs.push('<< /Type /Pages /Kids ['+pages.map((_,k)=>(5+2*k)+' 0 R').join(' ')+'] /Count '+pages.length+' >>');
+  objs.push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+  objs.push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+  pages.forEach((ops,k)=>{
+    const c=ops.join('\n');
+    objs.push('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents '+(6+2*k)+' 0 R /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> >>');
+    objs.push('<< /Length '+c.length+' >>\nstream\n'+c+'\nendstream');
+  });
+  let pdf='%PDF-1.4\n', offs=[];
+  objs.forEach((o,i)=>{ offs.push(pdf.length); pdf+=(i+1)+' 0 obj\n'+o+'\nendobj\n' });
+  const xref=pdf.length;
+  pdf+='xref\n0 '+(objs.length+1)+'\n0000000000 65535 f \n';
+  offs.forEach(o=>{ pdf+=String(o).padStart(10,'0')+' 00000 n \n' });
+  pdf+='trailer\n<< /Size '+(objs.length+1)+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF';
+  return new Blob([pdf],{type:'application/pdf'});
+}
+/* Il PDF completo di una partita: orari, punteggi dei set, statistiche, cronologia dei punti con i cambi palla. */
+/* Misure vere dei caratteri Helvetica (millesimi di corpo): servono per non far mai uscire il testo dalla pagina. */
+const HW=[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584];
+const HWB=[278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584];
+function pdfNorm(s){ return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\x20-\x7E]/g,'?') }
+function pdfW(s,sz,bold){ const t=bold?HWB:HW; let w=0; for(const ch of pdfNorm(s)) w+=t[ch.charCodeAt(0)-32]||556; return w*sz/1000 }
+function pdfFit(s,sz,bold,mw){ s=pdfNorm(s); if(pdfW(s,sz,bold)<=mw) return s; while(s.length>1&&pdfW(s+'...',sz,bold)>mw) s=s.slice(0,-1); return s+'...' }
+function pdfWrap(s,sz,bold,mw){
+  const out=[]; let cur='';
+  pdfNorm(s).split(' ').forEach(word=>{
+    while(pdfW(word,sz,bold)>mw){ // parola piu' larga della riga: la spezzo
+      let k=word.length; while(k>1&&pdfW(word.slice(0,k),sz,bold)>mw) k--;
+      if(cur){ out.push(cur); cur='' }
+      out.push(word.slice(0,k)); word=word.slice(k);
+    }
+    const t=cur?cur+' '+word:word;
+    if(cur&&pdfW(t,sz,bold)>mw){ out.push(cur); cur=word } else cur=t;
+  });
+  if(cur||!out.length) out.push(cur);
+  return out;
+}
+/* PDF A4 (595 x 842 pt), margini di 40 pt: ogni testo e' misurato, accorciato o mandato a capo dentro i margini. */
+function matchPDF(M){
+  const W=595,H=842,MG=40,CW=W-2*MG, pages=[[]]; let y=H-MG;
+  const f=n=>(Math.round(n*100)/100).toString();
+  const rgb=a=>a.map(f).join(' ');
+  const op=s=>pages[pages.length-1].push(s);
+  const text=(x,yy,sz,s,bold,c)=>op('BT /'+(bold?'F2':'F1')+' '+sz+' Tf '+rgb(c||[0,0,0])+' rg '+f(x)+' '+f(yy)+' Td ('+pdfEsc(s)+') Tj ET');
+  const rect=(x,yy,w,hh,fill,stroke,lw)=>op((fill?rgb(fill)+' rg ':'')+(stroke?rgb(stroke)+' RG '+f(lw||1)+' w ':'')+f(x)+' '+f(yy)+' '+f(w)+' '+f(hh)+' re '+(fill&&stroke?'B':fill?'f':'S'));
+  const hline=(yy)=>op('0.75 0.75 0.75 RG 0.5 w '+MG+' '+f(yy)+' m '+(W-MG)+' '+f(yy)+' l S');
+  const need=hh=>{ if(y-hh<MG+8){ pages.push([]); y=H-MG } };
+  const GR=[0.3,0.3,0.3];
+  // paragrafo mandato a capo sulla larghezza utile
+  const para=(s,sz,c,gap,bold)=>{
+    pdfWrap(s,sz,bold,CW).forEach(l=>{ need(sz+4); text(MG,y-sz,sz,l,bold,c); y-=sz+3 });
+    y-=(gap||0);
+  };
+  // riga di tabella: ogni cella e' accorciata alla larghezza della sua colonna
+  const cells=(cols,vals,sz,bolds,off)=>vals.forEach((v,i)=>text(cols[i][0],y-off,sz,pdfFit(v,sz,bolds(i),cols[i][1]-6),bolds(i)));
+  const bw=RMODE==='bw';
+  const colOf=t=>pdfRGB(tc(M,t));
+  const txtOn=t=>pdfRGB(textOn(tc(M,t)));
+  const nm=M.names, T=timesOf(M), d=new Date(M.date);
+
+  text(MG,y-16,17,'Riepilogo partita di pallavolo',true); y-=26;
+  para('Data: '+d.toLocaleDateString('it-IT'),10,null,2);
+  if(T.st) para('Ora di inizio: '+hm(T.st)+'     Ora di fine: '+(T.en?hm(T.en):'partita in corso')+(T.dur?'     Durata: '+T.dur+' min':''),10,null,2);
+  else para('Ora di creazione partita: '+hm(M.date)+'. Orari di inizio e fine non registrati per questa partita.',10,null,2);
+  y-=6;
+  // squadre e set vinti: il corpo scende finche' il nome sta nella sua meta' della pagina
+  const cx=W/2, mwName=cx-52-18-MG;
+  const nsz=n=>{ let s=14; while(s>9&&pdfW(n,s,true)>mwName) s-=0.5; return s };
+  const n0=pdfFit(nm[0],nsz(nm[0]),true,mwName), n1=pdfFit(nm[1],nsz(nm[1]),true,mwName);
+  const s0=nsz(nm[0]), s1=nsz(nm[1]), w0=pdfW(n0,s0,true), w1=pdfW(n1,s1,true);
+  const sc2=M.won[0]+' - '+M.won[1];
+  text(cx-52-w0,y-20,s0,n0,true);
+  text(cx-pdfW(sc2,28,true)/2,y-24,28,sc2,true);
+  text(cx+52,y-20,s1,n1,true);
+  rect(cx-52-w0-16,y-18,10,10,colOf(0),bw?[0,0,0]:null,1);
+  rect(cx+52+w1+6,y-18,10,10,colOf(1),bw?[0,0,0]:null,1);
+  y-=44;
+
+  // tabella dei set
+  const withData=M.sets.filter(x=>x.pl&&x.pl.length);
+  text(MG,y-11,11,'Punteggi dei set',true); y-=18;
+  const cols=[[MG,50],[MG+50,70],[MG+120,170],[MG+290,70],[MG+360,95],[MG+455,60]];
+  cells(cols,['Set','Punteggio','Batte per primo','Cambi palla','Orario','Durata'],8.5,()=>true,9);
+  y-=13; hline(y);
+  M.sets.forEach(x=>{
+    need(16);
+    const cambi=(x.pl&&x.pl.length)?x.pl.filter(p=>p.side).length:'-';
+    cells(cols,['Set '+x.n,x.a+' - '+x.b,(x.sv0==null?'-':nm[x.sv0]),String(cambi),(x.ts&&x.te)?hm(x.ts)+' - '+hm(x.te):'-',(x.ts&&x.te)?mins(x.ts,x.te)+' min':'-'],10,i=>i===1,12);
+    y-=16; hline(y);
+  });
+  y-=10;
+
+  // convocate
+  if(M.squad&&M.squad.length){
+    need(50);
+    text(MG,y-11,11,pdfFit('Convocate - '+nm[M.rt||0],11,true,CW),true); y-=17;
+    para(M.squad.map(v=>String(v).trim()).join('  |  '),9,[0,0,0],8);
+  }
+
+  // statistiche di gara
+  if(withData.length){
+    need(110);
+    text(MG,y-11,11,'Statistiche di gara',true); y-=18;
+    const st=[0,1].map(t=>({pt:0,so:0,sv:0,best:0,lead:0}));
+    M.sets.forEach(x=>{ st[0].pt+=x.a; st[1].pt+=x.b });
+    withData.forEach(x=>{
+      const s=setStats(x);
+      x.pl.forEach(p=>{ if(p.side) st[p.t].so++; else st[p.t].sv++ });
+      [0,1].forEach(t=>{ if(s.best[t]>st[t].best) st[t].best=s.best[t]; if(s.lead[t]>st[t].lead) st[t].lead=s.lead[t] });
+    });
+    const sc=[[MG,130],[MG+130,55],[MG+185,65],[MG+250,130],[MG+380,85],[MG+465,50]];
+    cells(sc,['Squadra','Punti','Set vinti','Punti dopo cambio palla','Punti al servizio','Serie max'],8,()=>true,9);
+    y-=13; hline(y);
+    [0,1].forEach(t=>{
+      cells(sc,[nm[t],String(st[t].pt),String(M.won[t]),String(st[t].so),String(st[t].sv),st[t].best+' pt'],10,i=>i===0,12);
+      y-=16; hline(y);
+    });
+    const tot=withData.reduce((n,x)=>n+x.pl.filter(p=>p.side).length,0);
+    y-=4;
+    para('Cambi palla totali: '+tot+'. Vantaggio massimo: '+nm[0]+' +'+st[0].lead+', '+nm[1]+' +'+st[1].lead+'.',8.5,GR,1);
+    para('Punti dopo cambio palla = segnati mentre si riceve (la squadra prende la battuta). Serie = punti consecutivi.',8.5,GR,10);
+
+    // cronologia dei punti
+    need(70);
+    text(MG,y-11,11,'Cronologia dei punti',true); y-=16;
+    para('Un quadratino per punto, col punteggio della squadra dopo il punto. Bordo marcato = cambio palla: quella squadra prende la battuta.',8.5,GR,4);
+    const PER=34, cw=CW/PER, ch=13, half=CW/2-26;
+    withData.forEach(x=>{
+      const head='Set '+x.n+':  '+x.a+' - '+x.b+'   |   batte per primo: '+nm[x.sv0]+'   |   cambi palla: '+x.pl.filter(p=>p.side).length+((x.ts&&x.te)?'   |   '+hm(x.ts)+' - '+hm(x.te):'');
+      need(Math.min(650,95+14+Math.ceil(x.pl.length/PER)*(2*ch+12)+6));
+      para(head,10.5,null,2,true);
+      const fz=formazione(x), cb=cambiTxt(x);
+      if(fz) para('Formazione iniziale: '+fz,8,[0.25,0.25,0.25],0);
+      if(x.bq&&x.bq.length) para(panchinaTxt(M,x),8,[0.25,0.25,0.25],0);
+      if(cb) para('Cambi: '+cb,8,[0.25,0.25,0.25],0);
+      if(fz||cb||(x.bq&&x.bq.length)) y-=3;
+      for(let s0=0;s0<x.pl.length;s0+=PER){
+        need(2*ch+22);
+        const chunk=x.pl.slice(s0,s0+PER);
+        if(s0===0){ // etichette squadra solo sul primo blocco del set
+          const a0=pdfFit(nm[0],8,false,half), a1=pdfFit(nm[1],8,false,half);
+          rect(MG,y-9,7,7,colOf(0),bw?[0,0,0]:null,0.8); text(MG+11,y-8,8,a0);
+          const x2=MG+CW/2;
+          rect(x2,y-9,7,7,colOf(1),bw?[0,0,0]:null,0.8); text(x2+11,y-8,8,a1);
+          y-=14;
+        }
+        chunk.forEach((p,i)=>{
+          const t=p.t, X=MG+i*cw+0.5, Y=t===0?y-ch:y-ch*2-3;
+          if(p.side) rect(X,Y,cw-1.5,ch,colOf(t),[0,0,0],2);
+          else rect(X,Y,cw-1.5,ch,colOf(t),bw?[0,0,0]:[0.55,0.55,0.55],0.4);
+          const num=String(t?p.b:p.a);
+          text(X+(cw-1.5-pdfW(num,6.5,false))/2,Y+4,6.5,num,false,txtOn(t));
+        });
+        y-=2*ch+12;
+      }
+      y-=6;
+    });
+  } else {
+    para('Cronologia punto per punto e statistiche non disponibili: partita salvata prima di questa funzione.',9,GR,0);
+  }
+  // numero di pagina
+  pages.forEach((pg,k)=>{
+    const s='Pagina '+(k+1)+' di '+pages.length;
+    pg.push('BT /F1 8 Tf 0.45 0.45 0.45 rg '+f(W/2-pdfW(s,8,false)/2)+' 22 Td ('+pdfEsc(s)+') Tj ET');
+  });
+  return pdfBuild(pages);
+}
+async function sharePDFModel(M,fname){
+  let blob;
+  try{ blob=matchPDF(M) }catch(e){ toast('Errore nel creare il PDF: '+(e&&e.message),true); return }
+  const file=new File([blob],fname,{type:'application/pdf'});
+  // 1) foglio di condivisione di iOS (serve una pagina https: da file locale puo' non essere disponibile)
+  try{
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:'Riepilogo partita'}); return;
+    }
+  }catch(e){ if(e&&e.name==='AbortError') return }
+  // 2) salvataggio diretto del file
+  try{
+    const u=URL.createObjectURL(blob), a=document.createElement('a');
+    a.href=u; a.download=fname; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(u),60000);
+    toast('Condivisione non disponibile qui: provo a scaricare il PDF. In alternativa usa "Invia testo".');
+  }catch(e){ toast('PDF non condivisibile da qui. Usa "Invia testo (WhatsApp)".',true) }
+}
+function pdfName(M){
+  const d=new Date(M.date), s=n=>String(n).replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  return (s(M.names[0])+'_'+s(M.names[1])+'_'+d.toISOString().slice(0,10)+'.pdf');
+}
+function sharePDF(){ const M=liveModel(); return sharePDFModel(M,pdfName(M)) }
+function sharePDFof(i){ if(!HIST[i]) return; const M=matchModel(HIST[i]); return sharePDFModel(M,pdfName(M)) }
+/* Alternativa che funziona sempre: il riepilogo in testo, mandato a WhatsApp. */
+function summaryText(){
+  const L=['Pallavolo: '+S.names[0]+' - '+S.names[1], new Date(S.date).toLocaleDateString('it-IT')];
+  S.log.forEach(x=>L.push('Set '+x.n+': '+x.a+' - '+x.b+(x.pl&&x.pl.length?' (cambi palla: '+x.pl.filter(p=>p.side).length+')':'')));
+  L.push('Set vinti: '+S.sets[0]+' - '+S.sets[1]);
+  return L.join('\n');
+}
+function shareText(){
+  const t=summaryText();
+  if(navigator.share){ navigator.share({text:t}).catch(e=>{ if(!e||e.name!=='AbortError') window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank') }); return }
+  window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank');
+}
+
+/* ---------- Icona dell'app: pallone da pallavolo disegnato al volo ----------
+   Viene generata con un canvas 180x180 e usata come apple-touch-icon,
+   cosi' Aggiungi alla schermata Home mostra un'icona riconoscibile, senza file esterni. */
+function makeIcon(){
+  const N=180, c=document.createElement('canvas'); c.width=c.height=N;
+  const g=c.getContext('2d');
+  const bg=g.createLinearGradient(0,0,N,N); bg.addColorStop(0,'#ff9a3c'); bg.addColorStop(1,'#ff5a00');
+  g.fillStyle=bg; g.fillRect(0,0,N,N);
+  const cx=N/2, cy=N/2, R=62;
+  // palla
+  g.fillStyle='#ffffff'; g.beginPath(); g.arc(cx,cy,R,0,Math.PI*2); g.fill();
+  g.save(); g.beginPath(); g.arc(cx,cy,R,0,Math.PI*2); g.clip();
+  g.strokeStyle='#0b1020'; g.lineWidth=5; g.lineCap='round';
+  // tre spicchi curvi tipici del pallone
+  for(let k=0;k<3;k++){
+    g.save(); g.translate(cx,cy); g.rotate(k*2*Math.PI/3);
+    g.beginPath(); g.moveTo(0,0); g.bezierCurveTo(22,-18,46,-26,R+6,-18); g.stroke();
+    g.beginPath(); g.moveTo(0,0); g.bezierCurveTo(-4,24,-2,46,10,R+6); g.stroke();
+    g.restore();
+  }
+  g.restore();
+  g.strokeStyle='#0b1020'; g.lineWidth=6; g.beginPath(); g.arc(cx,cy,R,0,Math.PI*2); g.stroke();
+  // punteggio in basso
+  g.fillStyle='#ffffff'; g.font='800 22px -apple-system,Helvetica,Arial,sans-serif'; g.textAlign='center';
+  g.fillText('25',N/2,N-8);
+  const url=c.toDataURL('image/png');
+  document.getElementById('appicon').setAttribute('href',url);
+  document.getElementById('favicon').setAttribute('href',url);
+}
+try{ makeIcon() }catch(e){}
+
+load(); render();
+
+/* Registra il file sw.js per l'uso offline (solo da indirizzo web, non da file locale). */
+try{
+  if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
+    window.addEventListener('load',()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}) });
+  }
+}catch(e){}
+</script>
+</body>
+</html>
