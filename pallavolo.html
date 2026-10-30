@@ -67,6 +67,7 @@ th,td{padding:9px;border-bottom:1px solid var(--line);text-align:center}
 .chip.sel{outline:3px solid var(--text)}
 .chip.off{background:var(--card2);color:var(--muted);border:1px solid var(--line)}
 .chip.ghost{position:fixed;z-index:50;pointer-events:none;opacity:.92;transform:translate(-50%,-50%);box-shadow:var(--shadow)}
+.srvbtn{font-size:14px;font-weight:800;padding:4px 14px;border-radius:999px;border:2px solid var(--tcb,var(--tc));background:transparent;color:var(--tcb,var(--tc))}
 .tobtn{display:block;width:100%;margin-top:10px;font-size:17px;font-weight:800;padding:12px;border-radius:14px;border:2px solid var(--tcb,var(--tc));background:transparent;color:var(--tcb,var(--tc))}
 .tobtn:disabled{opacity:.35;border-color:var(--line);color:var(--muted)}
 .tobig{font-size:200px;font-weight:900;line-height:1;text-align:center;color:var(--accent);font-variant-numeric:tabular-nums}
@@ -156,6 +157,7 @@ th,td{padding:9px;border-bottom:1px solid var(--line);text-align:center}
 :root[data-layout="phone"] .score{font-size:84px}
 :root[data-layout="phone"] .hint{display:none}
 :root[data-layout="phone"] .serve{height:24px;margin:6px 0 2px;font-size:12px}
+:root[data-layout="phone"] .srvbtn{font-size:11px;padding:3px 9px}
 :root[data-layout="phone"] .tobtn{font-size:13px;padding:8px;margin-top:6px}
 :root[data-layout="phone"] .bench{padding:5px}
 :root[data-layout="phone"] .chip{font-size:12px;padding:6px 9px}
@@ -349,8 +351,9 @@ function endSet(manual,winner){
   S.sets[w]++;
   S.log.push({n:S.setNum,a:S.pts[0],b:S.pts[1],pl:S.pl,sv0:S.sv0,ts:S.ts||null,te:Date.now(),lu:S.lu0||null,bq:S.bq0||[],sb:subsOut(S.subs[S.home])});
   if(matchDecided()){ finishMatch(); return }
+  const prevSv=S.sv0; // chi aveva battuto per primo nel set appena chiuso
   S.setNum++; S.pts=[0,0]; S.history=[]; S.subs=[[],[]]; S.tos=[0,0]; S.pl=[]; S.sv0=null; S.ts=null; S.lu0=null; S.bq0=null; // cambi e timeout si azzerano a ogni set
-  S.server=w===0?1:0; // semplificazione: batte la squadra che non ha vinto il set
+  S.server=(prevSv===0||prevSv===1)?1-prevSv:(w===0?1:0); // battuta alternata; prima del primo punto si puo' cambiare
   save(); render();
 }
 
@@ -381,7 +384,7 @@ function swapSides(){
   S.home=1-S.home;
   S.server=1-S.server;
   const fl=p=>({t:1-p.t,a:p.b,b:p.a,side:p.side});
-  S.log=S.log.map(x=>({n:x.n,a:x.b,b:x.a,sv0:(x.sv0==null?null:1-x.sv0),pl:(x.pl||[]).map(fl)}));
+  S.log=S.log.map(x=>Object.assign({},x,{a:x.b,b:x.a,sv0:(x.sv0==null?null:1-x.sv0),pl:(x.pl||[]).map(fl)}));
   S.pl=S.pl.map(fl); if(S.sv0!=null) S.sv0=1-S.sv0;
   S.history=[];
   save(); render();
@@ -396,12 +399,18 @@ function newMatch(){
 }
 
 /* ---------- Campo ---------- */
+/* Si sceglie chi batte per primo solo prima del primo punto del set (sorteggio). */
+function setServer(t){
+  if(S.over||S.pl.length>0) return;
+  S.server=t; save(); render();
+  toast(S.names[t]+' batte per prima.');
+}
 function teamHTML(t){
   return `
     <input class="name" value="${esc(S.names[t])}" onchange="setName(${t},this.value)">
     <div class="sets"><span class="setlbl">SET VINTI</span><span class="setnum">${S.sets[t]}</span>${t===S.home?'<span class="setlbl">&middot; CASA</span>':''}</div>
     <button class="scorebtn" onclick="point(${t})"><div class="score">${S.pts[t]}</div><div class="hint">tocca per segnare il punto</div></button>
-    <div class="serve">${S.server===t?'<span>AL SERVIZIO</span>':''}</div>
+    <div class="serve">${S.server===t?'<span>AL SERVIZIO</span>':((!S.over&&S.pl.length===0)?`<button class="srvbtn" onclick="setServer(${t})">Batte per prima</button>`:'')}</div>
     <button class="tobtn" ${(S.over||toLeft(t)<=0)?'disabled':''} onclick="callTimeout(${t})">TIMEOUT (${toLeft(t)} su 2)</button>
 `;
 }
