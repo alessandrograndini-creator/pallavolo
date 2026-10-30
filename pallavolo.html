@@ -254,6 +254,7 @@ function load(){
   if(S.cfg.showCourt===undefined) S.cfg.showCourt=true;
   if(S.cfg.playAll===undefined) S.cfg.playAll=false;
   if(S.cfg.autoRot===undefined) S.cfg.autoRot=false;
+  if(S.cfg.maxServe===undefined) S.cfg.maxServe=0;
   if(!Array.isArray(S.bq)) S.bq=[];
   setTheme(localStorage.getItem(TKEY)||'dark');
   applyLayout();
@@ -317,7 +318,20 @@ function point(t){
     S.lineup[t]=[l[3],l[0],l[1],l[4],l[5],l[2]];
     if(S.cfg.autoRot && t===S.home) autoRotate(t,l[2]);
   }
-  S.pl.push({t:t,a:S.pts[0],b:S.pts[1],side:side});
+  // Under 11: dopo N punti di fila sulla propria battuta il servizio passa comunque agli avversari (cambio palla)
+  let fc=false;
+  if(!side && S.cfg.maxServe>0 && !setWon(t)){
+    let n=1;
+    for(let i=S.pl.length-1;i>=0;i--){ const q=S.pl[i]; if(q.t===t && !q.side) n++; else break }
+    if(n>=S.cfg.maxServe){
+      fc=true; const o=1-t, l=S.lineup[o];
+      S.server=o;
+      S.lineup[o]=[l[3],l[0],l[1],l[4],l[5],l[2]];
+      if(S.cfg.autoRot && o===S.home) autoRotate(o,l[2]);
+      else toast('Terza battuta di fila: cambio palla.');
+    }
+  }
+  S.pl.push({t:t,a:S.pts[0],b:S.pts[1],side:side,fc:fc});
   if(setWon(t)) endSet(false,t);
   save(); render();
 }
@@ -372,7 +386,7 @@ function finishMatch(){
       // sv = chi batte per primo (0 = casa); pts = un numero per punto: (0 casa / 1 ospiti)*2 + (1 se e' cambio palla)
       log:S.log.map(x=>({n:x.n,h:h===0?x.a:x.b,a:h===0?x.b:x.a,
         sv:(x.sv0==null?null:(x.sv0===h?0:1)), ts:x.ts||null, te:x.te||null, lu:x.lu||null, bq:x.bq||[], sb:x.sb||[],
-        pts:(x.pl||[]).map(p=>((p.t===h?0:1)*2+(p.side?1:0)))}))
+        pts:(x.pl||[]).map(p=>((p.t===h?0:1)*2+(p.side?1:0)+(p.fc?4:0)))}))
     });
     saveHist();
   }
@@ -383,7 +397,7 @@ function swapSides(){
   S.names.reverse(); S.pts.reverse(); S.sets.reverse(); S.lineup.reverse(); S.subs.reverse(); S.tos.reverse(); S.colors.reverse();
   S.home=1-S.home;
   S.server=1-S.server;
-  const fl=p=>({t:1-p.t,a:p.b,b:p.a,side:p.side});
+  const fl=p=>({t:1-p.t,a:p.b,b:p.a,side:p.side,fc:p.fc});
   S.log=S.log.map(x=>Object.assign({},x,{a:x.b,b:x.a,sv0:(x.sv0==null?null:1-x.sv0),pl:(x.pl||[]).map(fl)}));
   S.pl=S.pl.map(fl); if(S.sv0!=null) S.sv0=1-S.sv0;
   S.history=[];
@@ -718,6 +732,9 @@ function openSettings(){
     <div class="lbl">Giro continuo con panchina (under 11)</div>
     <div class="opt">${b(!S.cfg.autoRot,'No, cambi a mano','setCfg(\'autoRot\',false)')}${b(S.cfg.autoRot,'Si, entrano in ordine','setCfg(\'autoRot\',true)')}</div>
     <p class="note">Con il giro continuo, ogni volta che la squadra di casa conquista la battuta e gira, chi era in posizione 2 esce in fondo alla panchina e la prima della lista entra in posizione 1, in battuta. Non conta come cambio. L'ordine si decide trascinando i nomi in panchina.</p>
+    <div class="lbl">Limite di battute di fila (under 11)</div>
+    <div class="opt">${b(!S.cfg.maxServe,'Nessun limite',"setCfg('maxServe',0)")}${b(S.cfg.maxServe===3,'Massimo 3 punti di fila',"setCfg('maxServe',3)")}</div>
+    <p class="note">Con il limite attivo, dopo 3 punti consecutivi sulla propria battuta il servizio passa agli avversari anche se la squadra ha segnato (cambio palla, e gli avversari girano). Se la squadra sbaglia prima, il cambio palla avviene come sempre.</p>
     <div class="lbl">Giocare tutti i set</div>
     <div class="opt">${b(!S.cfg.playAll,'No, finisce al set decisivo','setCfg(\'playAll\',false)')}${b(S.cfg.playAll,'Si, si giocano tutti (under 11)','setCfg(\'playAll\',true)')}</div>
     ${offlineNote()}
@@ -817,9 +834,11 @@ function summaryTable(){
 /* Turni di battuta di un set: ogni turno inizia col punto del cambio palla e continua finche' la stessa squadra segna. */
 function runsOf(x){
   let cur={sv:x.sv0,pts:[]}; const runs=[cur];
+  let prevFc=false;
   (x.pl||[]).forEach(p=>{
-    if(p.side){ cur={sv:p.t,pts:[p]}; runs.push(cur) }
+    if(p.side||prevFc){ cur={sv:p.t,pts:[p]}; runs.push(cur) }
     else cur.pts.push(p);
+    prevFc=!!p.fc;
   });
   return runs.filter(r=>r.pts.length>0);
 }
@@ -850,7 +869,7 @@ function liveModel(){
 function matchModel(m){
   const sets=m.log.map(x=>{
     let a=0,b=0;
-    const pl=(x.pts||[]).map(c=>{ const t=c>>1; if(t===0) a++; else b++; return {t:t,a:a,b:b,side:!!(c&1)} });
+    const pl=(x.pts||[]).map(c=>{ const t=(c>>1)&1; if(t===0) a++; else b++; return {t:t,a:a,b:b,side:!!(c&1),fc:!!(c&4)} });
     return {n:x.n,a:x.h,b:x.a,pl:pl,sv0:(x.sv===undefined?null:x.sv),ts:x.ts||null,te:x.te||null,lu:x.lu||null,bq:x.bq||[],sb:x.sb||[]};
   });
   return {names:[m.home,m.away],cols:m.col||[null,null],sets:sets,won:[m.setsHome,m.setsAway],date:m.date,squad:m.squad||[],rt:0,rot:!!m.rot};
@@ -890,7 +909,7 @@ function detailHTML(M){
   const legend=`<p class="note">Ogni quadratino e' un punto, col numero progressivo della squadra che ha segnato, in ordine di gioco. Il bordo marcato indica il cambio palla: quella squadra prende la battuta. Scorri di lato se il set e' lungo.</p>`;
   const lab=t=>`<div class="tlname"><span class="dot" style="background:${tc(M,t)};${bwb()}"></span>${esc(M.names[t])}</div>`;
   const cards=withData.map(x=>{
-    const cambi=x.pl.filter(p=>p.side).length;
+    const cambi=x.pl.filter(p=>p.side||p.fc).length;
     const cell=(p,t)=>`<span class="tc">${p.t===t?`<span class="tl ${p.side?'sd':''}" style="background:${tc(M,t)};${bwb()}">${seg(t?p.b:p.a,textOn(tc(M,t)),14)}</span>`:''}</span>`;
     const row=t=>`<div class="tlrow">${x.pl.map(p=>cell(p,t)).join('')}</div>`;
     return `<div class="setcard"><div class="sh"><b>Set ${x.n}${x.live?' (in corso)':''}</b> <span class="note">| batte per primo: ${esc(M.names[x.sv0])} | cambi palla: ${cambi}${x.ts&&x.te?' | '+hm(x.ts)+'-'+hm(x.te)+' ('+mins(x.ts,x.te)+' min)':''}</span></div>
@@ -922,7 +941,7 @@ function setStats(x){
     if(len>best[p.t]) best[p.t]=len;
     const d=p.a-p.b; if(d>lead[0]) lead[0]=d; if(-d>lead[1]) lead[1]=-d;
   });
-  return {best:best,lead:lead,cambi:x.pl.filter(p=>p.side).length};
+  return {best:best,lead:lead,cambi:x.pl.filter(p=>p.side||p.fc).length};
 }
 function analysisHTML(M){
   const ds=M.sets.filter(x=>x.pl&&x.pl.length);
@@ -1150,7 +1169,7 @@ function matchPDF(M){
   y-=13; hline(y);
   M.sets.forEach(x=>{
     need(16);
-    const cambi=(x.pl&&x.pl.length)?x.pl.filter(p=>p.side).length:'-';
+    const cambi=(x.pl&&x.pl.length)?x.pl.filter(p=>p.side||p.fc).length:'-';
     cells(cols,['Set '+x.n,x.a+' - '+x.b,(x.sv0==null?'-':nm[x.sv0]),String(cambi),(x.ts&&x.te)?hm(x.ts)+' - '+hm(x.te):'-',(x.ts&&x.te)?mins(x.ts,x.te)+' min':'-'],10,i=>i===1,12);
     y-=16; hline(y);
   });
@@ -1181,7 +1200,7 @@ function matchPDF(M){
       cells(sc,[nm[t],String(st[t].pt),String(M.won[t]),String(st[t].so),String(st[t].sv),st[t].best+' pt'],10,i=>i===0,12);
       y-=16; hline(y);
     });
-    const tot=withData.reduce((n,x)=>n+x.pl.filter(p=>p.side).length,0);
+    const tot=withData.reduce((n,x)=>n+x.pl.filter(p=>p.side||p.fc).length,0);
     y-=4;
     para('Cambi palla totali: '+tot+'. Vantaggio massimo: '+nm[0]+' +'+st[0].lead+', '+nm[1]+' +'+st[1].lead+'.',8.5,GR,1);
     para('Punti dopo cambio palla = segnati mentre si riceve (la squadra prende la battuta). Serie = punti consecutivi.',8.5,GR,10);
@@ -1192,7 +1211,7 @@ function matchPDF(M){
     para('Un quadratino per punto, col punteggio della squadra dopo il punto. Bordo marcato = cambio palla: quella squadra prende la battuta.',8.5,GR,4);
     const PER=34, cw=CW/PER, ch=13, half=CW/2-26;
     withData.forEach(x=>{
-      const head='Set '+x.n+':  '+x.a+' - '+x.b+'   |   batte per primo: '+nm[x.sv0]+'   |   cambi palla: '+x.pl.filter(p=>p.side).length+((x.ts&&x.te)?'   |   '+hm(x.ts)+' - '+hm(x.te):'');
+      const head='Set '+x.n+':  '+x.a+' - '+x.b+'   |   batte per primo: '+nm[x.sv0]+'   |   cambi palla: '+x.pl.filter(p=>p.side||p.fc).length+((x.ts&&x.te)?'   |   '+hm(x.ts)+' - '+hm(x.te):'');
       need(Math.min(650,95+14+Math.ceil(x.pl.length/PER)*(2*ch+12)+6));
       para(head,10.5,null,2,true);
       const fz=formazione(x), cb=cambiTxt(x);
@@ -1258,7 +1277,7 @@ function sharePDFof(i){ if(!HIST[i]) return; const M=matchModel(HIST[i]); return
 /* Alternativa che funziona sempre: il riepilogo in testo, mandato a WhatsApp. */
 function summaryText(){
   const L=['Pallavolo: '+S.names[0]+' - '+S.names[1], new Date(S.date).toLocaleDateString('it-IT')];
-  S.log.forEach(x=>L.push('Set '+x.n+': '+x.a+' - '+x.b+(x.pl&&x.pl.length?' (cambi palla: '+x.pl.filter(p=>p.side).length+')':'')));
+  S.log.forEach(x=>L.push('Set '+x.n+': '+x.a+' - '+x.b+(x.pl&&x.pl.length?' (cambi palla: '+x.pl.filter(p=>p.side||p.fc).length+')':'')));
   L.push('Set vinti: '+S.sets[0]+' - '+S.sets[1]);
   return L.join('\n');
 }
