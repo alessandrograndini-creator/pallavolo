@@ -182,6 +182,17 @@ th,td{padding:9px;border-bottom:1px solid var(--line);text-align:center}
 .bench{margin-top:6px;padding:5px 8px}.chip{padding:6px 10px;font-size:14px}.bench h4{margin-bottom:4px}
 .top{padding:6px 16px}.main{padding-top:2px}
 }
+
+.ghost{position:fixed;z-index:50;pointer-events:none;opacity:.92;transform:translate(-50%,-50%);box-shadow:var(--shadow)}
+.tok.ghost{box-shadow:none;background:transparent}
+.tok.mine{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.bench.drop{outline:3px solid var(--ok);outline-offset:-3px;border-radius:14px}
+.fcard{border:1px solid var(--line);border-radius:14px;padding:10px;margin:8px 0;background:var(--card2)}
+.fcard .fname{width:100%;font-weight:800;font-size:17px;margin-bottom:4px}
+.fprev{font-size:13px;color:var(--muted);margin:2px 0 8px;line-height:1.35}
+.frow{display:flex;flex-wrap:wrap;gap:6px}.frow button{margin:0}
+.plb{flex:0 0 22px;text-align:center;font-size:18px}
+.box button:disabled{opacity:.4}
 </style>
 </head>
 <body>
@@ -191,6 +202,7 @@ th,td{padding:9px;border-bottom:1px solid var(--line);text-align:center}
     <button onclick="openSettings()">Impostazioni</button>
     <button onclick="openRoster()">Rosa</button>
     <button onclick="openSquad()">Convocate</button>
+    <button onclick="openForms()">Formazioni</button>
     <button onclick="openHistory()">Storico</button>
     <button onclick="undo()">Annulla</button>
     <button onclick="openSummary()">Riepilogo</button>
@@ -242,6 +254,7 @@ function load(){
   try{ S=JSON.parse(localStorage.getItem(KEY)) }catch(e){}
   try{ HIST=JSON.parse(localStorage.getItem(HKEY))||[] }catch(e){ HIST=[] }
   try{ ROSTER=JSON.parse(localStorage.getItem(RKEY))||[] }catch(e){ ROSTER=[] }
+  try{ FORMS=JSON.parse(localStorage.getItem(FKEY))||[] }catch(e){ FORMS=[] }
   if(!S) S=fresh();
   normRoster();
   if(!Array.isArray(S.squad)) S.squad=ROSTER.map(p=>p.id); // prima volta: tutte convocate, come prima dell'aggiornamento
@@ -255,6 +268,7 @@ function load(){
   if(S.cfg.playAll===undefined) S.cfg.playAll=false;
   if(S.cfg.autoRot===undefined) S.cfg.autoRot=false;
   if(S.cfg.maxServe===undefined) S.cfg.maxServe=0;
+  if(S.cfg.oppNames===undefined) S.cfg.oppNames=false;
   if(!Array.isArray(S.bq)) S.bq=[];
   setTheme(localStorage.getItem(TKEY)||'dark');
   applyLayout();
@@ -440,9 +454,9 @@ function tokHTML(t,label){
   const i=IDX[label], cur=S.lineup[t][i]||'', srv=(S.server===t&&label==='1');
   const col=teamColor(t), tx=textOn(col);
   const m=/^\s*(\d+)\s*(.*)$/.exec(cur), num=m?m[1]:'', name=m?m[2]:cur.trim();
-  const attrs=`class="pos tok ${srv?'server':''}" style="--tc:${col};--tx:${tx}" data-t="${t}" data-i="${i}" ${cur?`data-k="${esc(cur)}"`:''} onclick="posTap(${t},${i})"`;
+  const base=`style="--tc:${col};--tx:${tx}" data-t="${t}" data-i="${i}" ${cur?`data-k="${esc(cur)}"`:''}`;
   if(t===S.home && ROSTER.length && !pool().length){
-    return `<div class="pos tok" style="--tc:${col};--tx:${tx}" data-t="${t}" data-i="${i}" onclick="openSquad()"><div class="disc empty">+</div><div class="tname">convocate</div></div>`;
+    return `<div class="pos tok" ${base} onclick="openSquad()"><div class="disc empty">+</div><div class="tname">convocate</div></div>`;
   }
   if(t===S.home && ROSTER.length){
     const taken=S.lineup[t].filter((x,j)=>j!==i&&x);
@@ -453,10 +467,15 @@ function tokHTML(t,label){
     if(cur && !pool().some(p=>pstr(p)===cur)) opts.push(`<option value="${esc(cur)}" selected>${esc(cur)}</option>`);
     const shown=cur?(num||name.charAt(0).toUpperCase()):'+';
     const lock=(selChip&&selChip.t===t)?'pointer-events:none':'';
-    return `<div ${attrs}><div class="disc ${cur?'':'empty'}">${srv?BALL:''}${esc(shown)}</div><div class="tname">${esc(cur?name:'scegli')}</div><select class="ovl" style="${lock}" aria-label="Posizione ${label}" onchange="setPlayer(${t},${i},this.value)">${opts.join('')}</select></div>`;
+    return `<div class="pos tok mine ${srv?'server':''}" ${base} onclick="posTap(${t},${i})" ${cur?'onpointerdown="dragDown(event)"':''}><div class="disc ${cur?'':'empty'}">${srv?BALL:''}${esc(shown)}</div><div class="tname">${esc(cur?name:'scegli')}</div><select class="ovl" style="${lock}" aria-label="Posizione ${label}" onchange="setPlayer(${t},${i},this.value)">${opts.join('')}</select></div>`;
+  }
+  // avversari con numero e nome (impostazione): si compilano tutte e sei le posizioni insieme
+  if(t!==S.home && S.cfg.oppNames){
+    const shown=cur?(num||name.charAt(0).toUpperCase()):'+';
+    return `<div class="pos tok ${srv?'server':''}" ${base} onclick="openOpp(${t},${i})"><div class="disc ${cur?'':'empty'}">${srv?BALL:''}${esc(shown)}</div><div class="tname">${esc(name||'nome')}</div></div>`;
   }
   // avversari (o nessuna rosa): il numero si scrive direttamente nel dischetto
-  return `<div ${attrs}><div class="disc">${srv?BALL:''}<input class="dn" value="${esc(cur)}" aria-label="Posizione ${label}" onchange="setPlayer(${t},${i},this.value)"></div><div class="tname"></div></div>`;
+  return `<div class="pos tok ${srv?'server':''}" ${base} onclick="posTap(${t},${i})"><div class="disc">${srv?BALL:''}<input class="dn" value="${esc(cur)}" aria-label="Posizione ${label}" onchange="setPlayer(${t},${i},this.value)"></div><div class="tname"></div></div>`;
 }
 /* Il campo visto dall'alto: a sinistra la squadra 0, a destra la squadra 1, rete solo in mezzo al campo.
    Ogni squadra guarda la rete: a sinistra davanti 4-3-2 e dietro 5-6-1, a destra davanti 2-3-4 e dietro 1-6-5.
@@ -578,51 +597,100 @@ function benchHTML(t){
   const chips=benchOf(t).map((v,n)=>{
     const st=S.subs[t].find(s=>s.out===v && !s.done);
     const closed=S.subs[t].find(s=>s.out===v && s.done);
-    return `<span class="chip ${closed?'off':''} ${(selChip&&selChip.v===v)?'sel':''}" data-t="${t}" data-v="${esc(v)}" onpointerdown="chipDown(event)" title="${st?'Puo\' rientrare solo al posto di '+esc(st.in):''}"><i class="qn">${n+1}</i>${esc(v)}</span>`;
+    return `<span class="chip ${closed?'off':''} ${(selChip&&selChip.v===v)?'sel':''}" data-t="${t}" data-v="${esc(v)}" onpointerdown="dragDown(event)" title="${st?'Puo\' rientrare solo al posto di '+esc(st.in):''}"><i class="qn">${n+1}</i>${esc(v)}</span>`;
   }).join('');
-  return `<div class="bench"><h4><span>${S.cfg.autoRot?'PANCHINA - ordine di ingresso (trascina)':'PANCHINA - trascina per cambiare o riordinare'}</span><span>Cambi ${subsUsed(t)}/${S.cfg.maxSubs}</span></h4><div class="chips">${chips||(pool().length?'<small class="note">Nessuna in panchina.</small>':'<small class="note">Nessuna convocata: tocca Convocate in alto e scegli chi gioca.</small>')}</div></div>`;
+  return `<div class="bench" data-t="${t}"><h4><span>${S.cfg.autoRot?'PANCHINA - ordine di ingresso (trascina)':'PANCHINA - trascina in campo o riordina'}</span><span>Cambi ${subsUsed(t)}/${S.cfg.maxSubs}</span></h4><div class="chips">${chips||(pool().length?'<small class="note">Nessuna in panchina.</small>':'<small class="note">Nessuna convocata: tocca Convocate in alto e scegli chi gioca.</small>')}</div></div>`;
 }
-/* Trascinamento con il dito (pointer events): funziona su iPad senza librerie. */
-function chipDown(ev){
-  ev.preventDefault();
-  const el=ev.currentTarget, t=+el.dataset.t, v=el.dataset.v;
-  let moved=false, ghost=null, lastDrop=null, lastChip=null, lastX=0;
+/* Trascinamento con il dito (pointer events): funziona su iPad senza librerie.
+   Si trascina: una panchinara sul campo (inserisce o cambia), una titolare su un'altra titolare (scambia le posizioni
+   prima del primo punto), una titolare sulla panchina (la fa uscire), una panchinara su un'altra (riordina). */
+function dragDown(ev){
+  if(ev.pointerType==='mouse' && ev.button!==0) return;
+  const el=ev.currentTarget, t=+el.dataset.t, isChip=el.classList.contains('chip');
+  const v=isChip?el.dataset.v:el.dataset.k, fromI=isChip?-1:+el.dataset.i;
+  if(isChip) ev.preventDefault();
+  let moved=false, ghost=null, lastPos=null, lastChip=null, lastBench=null, lastX=0;
   const sx=ev.clientX, sy=ev.clientY;
+  const clear=()=>{
+    if(lastPos) lastPos.classList.remove('drop');
+    if(lastChip) lastChip.classList.remove('dropchip');
+    if(lastBench) lastBench.classList.remove('drop');
+    lastPos=lastChip=lastBench=null;
+  };
   const move=e=>{
     if(!moved && Math.hypot(e.clientX-sx,e.clientY-sy)<8) return;
-    if(!moved){ moved=true; ghost=el.cloneNode(true); ghost.classList.add('ghost'); document.body.appendChild(ghost) }
+    if(!moved){
+      moved=true;
+      if(isChip){ ghost=el.cloneNode(true); ghost.classList.add('ghost') }
+      else {
+        ghost=document.createElement('div'); ghost.className='tok ghost'; ghost.setAttribute('style',el.getAttribute('style'));
+        ghost.appendChild(el.querySelector('.disc').cloneNode(true)); el.style.opacity='.35';
+        try{ document.activeElement&&document.activeElement.blur() }catch(_){}
+      }
+      document.body.appendChild(ghost);
+    }
     ghost.style.left=e.clientX+'px'; ghost.style.top=e.clientY+'px';
     const under=document.elementFromPoint(e.clientX,e.clientY);
-    const pos=under&&under.closest?under.closest('.pos[data-t="'+t+'"]'):null;
-    if(lastDrop&&lastDrop!==pos) lastDrop.classList.remove('drop');
-    if(pos) pos.classList.add('drop');
-    lastDrop=pos;
-    const ch=under&&under.closest?under.closest('.chip[data-t="'+t+'"]'):null;
-    const tgt=(ch&&ch!==el)?ch:null;
-    if(lastChip&&lastChip!==tgt) lastChip.classList.remove('dropchip');
-    if(tgt) tgt.classList.add('dropchip');
-    lastChip=tgt; lastX=e.clientX;
+    clear();
+    if(!under||!under.closest) return;
+    let p=under.closest('.pos[data-t="'+t+'"]'); if(p===el) p=null;
+    let c=under.closest('.chip[data-t="'+t+'"]'); if(c===el) c=null;
+    const b=(!p&&!c&&!isChip)?under.closest('.bench[data-t="'+t+'"]'):null;
+    // da panchina: si puo' lasciare su una posizione o su un'altra panchinara; da titolare su una posizione, sulla panchina o su una panchinara
+    if(p){ p.classList.add('drop'); lastPos=p }
+    else if(c){ c.classList.add('dropchip'); lastChip=c }
+    else if(b){ b.classList.add('drop'); lastBench=b }
+    lastX=e.clientX;
   };
   const up=e=>{
     window.removeEventListener('pointermove',move);
     window.removeEventListener('pointerup',up);
     window.removeEventListener('pointercancel',up);
     if(ghost) ghost.remove();
-    if(lastDrop) lastDrop.classList.remove('drop');
-    if(lastChip) lastChip.classList.remove('dropchip');
+    const p=lastPos, c=lastChip, b=lastBench;
+    clear();
+    if(!isChip) el.style.opacity='';
     if(moved){
-      if(lastChip){ const r=lastChip.getBoundingClientRect(); moveBench(t,v,lastChip.dataset.v,lastX>r.left+r.width/2) }
-      else if(lastDrop) doSub(t,+lastDrop.dataset.i,v);
-    } else {
-      // semplice tocco: seleziona la panchinara, poi tocca la titolare da sostituire
+      if(e.type==='pointercancel') return;
+      if(isChip){
+        if(c){ const r=c.getBoundingClientRect(); moveBench(t,v,c.dataset.v,lastX>r.left+r.width/2) }
+        else if(p) placeFromBench(t,+p.dataset.i,v);
+      } else {
+        if(p) swapPos(t,fromI,+p.dataset.i);
+        else if(c){ const r=c.getBoundingClientRect(); toBench(t,fromI,c.dataset.v,lastX>r.left+r.width/2) }
+        else if(b) toBench(t,fromI,null,true);
+      }
+    } else if(isChip){
+      // semplice tocco: seleziona la panchinara, poi tocca la posizione
       selChip=(selChip&&selChip.v===v)?null:{t,v};
       render();
-      if(selChip) toast('Ora tocca la titolare da sostituire con '+v);
+      if(selChip) toast('Ora tocca la posizione per '+v);
     }
   };
   window.addEventListener('pointermove',move);
   window.addEventListener('pointerup',up);
   window.addEventListener('pointercancel',up);
+}
+/* Una panchinara va in campo. Posizione vuota, o set non ancora iniziato: e' solo la composizione della formazione,
+   non conta come cambio. A set iniziato, su una posizione occupata e' un cambio vero, con le sue regole. */
+function placeFromBench(t,j,v){
+  if(S.over){ toast('Partita terminata.',true); return }
+  const old=S.lineup[t][j];
+  if(old && S.pl.length>0){ doSub(t,j,v); return }
+  const bn=benchOf(t), k=bn.indexOf(v);
+  if(k>=0){ if(old) bn[k]=old; else bn.splice(k,1); S.bq=bn }
+  S.lineup[t][j]=v; save(); render();
+}
+function swapPos(t,a,b){
+  if(a===b) return;
+  if(S.pl.length>0){ toast('A set iniziato le posizioni non si scambiano: ci pensa la rotazione. Per cambiare una giocatrice usa la panchina.',true); return }
+  const l=S.lineup[t]; const x=l[a]; l[a]=l[b]; l[b]=x; save(); render();
+}
+function toBench(t,i,target,after){
+  if(S.pl.length>0){ toast('A set iniziato una giocatrice esce solo con un cambio: trascina una panchinara sulla sua posizione.',true); return }
+  const v=S.lineup[t][i]; if(!v) return;
+  S.lineup[t][i]='';
+  if(target){ moveBench(t,v,target,after) } else { S.bq=benchOf(t).filter(x=>x!==v).concat(v); save(); render() }
 }
 function moveBench(t,v,target,after){
   const bn=benchOf(t).filter(x=>x!==v);
@@ -630,7 +698,7 @@ function moveBench(t,v,target,after){
   bn.splice(after?k+1:k,0,v); S.bq=bn; save(); render();
 }
 function posTap(t,i){
-  if(selChip && selChip.t===t){ const v=selChip.v; selChip=null; doSub(t,i,v); }
+  if(selChip && selChip.t===t){ const v=selChip.v; selChip=null; placeFromBench(t,i,v); }
 }
 
 /* ---------- Timeout: 2 per squadra per set, 30 secondi ---------- */
@@ -661,6 +729,101 @@ function setPlayer(t,i,v){
     if(dup>=0){ toast(String(v).trim()+' e\' gia\' in posizione '+LBL[dup]+': una giocatrice non puo\' stare in due posizioni.',true); render(); return }
   }
   S.lineup[t][i]=v; save(); render();
+}
+
+
+/* ---------- Formazioni salvate ----------
+   Una formazione ricorda: le sei in campo (con la posizione), l'ordine della panchina e le convocate.
+   Si salva dalle giocatrici che ci sono in campo in quel momento e si richiama con un tocco prima del primo punto del set.
+   Dentro ci sono gli id delle giocatrici, non i nomi: se poi cambi un nome nella rosa, la formazione resta valida. */
+let FORMS=[], FDEL=-1, FUPD=-1;
+const FKEY='pallavolo_formazioni_v1';
+function saveForms(){ try{ localStorage.setItem(FKEY,JSON.stringify(FORMS)) }catch(e){ toast('Salvataggio formazioni non riuscito.',true) } }
+function idOfStr(v){ const p=ROSTER.find(q=>pstr(q)===v); return p?p.id:'' }
+function snapForm(){
+  const hm=S.home;
+  return {lineup:S.lineup[hm].map(idOfStr), bench:benchOf(hm).map(idOfStr).filter(Boolean), squad:S.squad.slice()};
+}
+function formPreview(f){
+  const by=new Map(ROSTER.map(p=>[p.id,p]));
+  const ps=['1','2','3','4','5','6'].map(l=>{ const p=by.get(f.lineup[IDX[l]]); return l+': '+(p?(p.num+' '+p.name).trim():'-') }).join('  |  ');
+  const nb=(f.bench||[]).filter(id=>by.has(id)).length;
+  return ps+(nb?'   (panchina: '+nb+')':'');
+}
+function openForms(){
+  if(!ROSTER.length){ showOv(`<h2>Formazioni</h2><p>Per salvare le formazioni serve prima la rosa. Aggiungi le giocatrici in Rosa.</p><button onclick="openRoster()">Apri la rosa</button><button class="grey" onclick="closeOv()">Chiudi</button>`); return }
+  const locked=S.over||S.pl.length>0, n=S.lineup[S.home].filter(Boolean).length;
+  const rows=FORMS.map((f,i)=>`<div class="fcard"><input class="fname" value="${esc(f.name)}" aria-label="Nome formazione" onchange="renForm(${i},this.value)">
+    <div class="fprev">${esc(formPreview(f))}</div>
+    <div class="frow"><button class="sm" ${locked?'disabled':''} onclick="recallForm(${i})">Richiama</button><button class="grey sm" onclick="updForm(${i})">${FUPD===i?'Confermi?':'Aggiorna con il campo'}</button><button class="red sm" onclick="delForm(${i})">${FDEL===i?'Confermi?':'Elimina'}</button></div></div>`).join('');
+  showOv(`<h2>Formazioni</h2>
+    <p class="note">Metti in campo la formazione (anche trascinando i nomi), dagli un nome e salvala. Poi la richiami con un tocco.</p>
+    <div class="row"><input class="nm" id="fnm" placeholder="Nome (es. Partenza A)"><button onclick="addForm()">Salva quella in campo</button></div>
+    <p class="note">In campo ora: ${n} su 6 giocatrici.</p>
+    ${rows||'<p class="note">Nessuna formazione salvata.</p>'}
+    ${locked?'<p class="note"><b>Richiamo bloccato:</b> si puo\' richiamare una formazione solo prima del primo punto del set. A set iniziato i cambi vanno fatti con la panchina, cosi\' restano validi i limiti dei cambi.</p>':''}
+    <button class="grey" onclick="FDEL=-1;FUPD=-1;closeOv()">Chiudi</button>`);
+}
+function addForm(){
+  const nm=document.getElementById('fnm').value.trim();
+  if(S.lineup[S.home].filter(Boolean).length===0){ toast('Metti prima almeno una giocatrice in campo.',true); return }
+  const name=nm||('Formazione '+(FORMS.length+1));
+  if(FORMS.some(f=>f.name.toLowerCase()===name.toLowerCase())){ toast('Esiste gia\' una formazione con questo nome.',true); return }
+  FORMS.push(Object.assign({id:'f'+Date.now().toString(36)+FORMS.length,name:name},snapForm()));
+  saveForms(); openForms(); toast('Formazione "'+name+'" salvata.');
+}
+function renForm(i,v){
+  v=v.trim(); if(!v){ openForms(); return }
+  if(FORMS.some((f,j)=>j!==i&&f.name.toLowerCase()===v.toLowerCase())){ toast('Esiste gia\' una formazione con questo nome.',true); openForms(); return }
+  FORMS[i].name=v; saveForms();
+}
+function updForm(i){
+  if(FUPD!==i){ FUPD=i; FDEL=-1; openForms(); return }
+  FUPD=-1;
+  if(S.lineup[S.home].filter(Boolean).length===0){ toast('In campo non c\'e\' nessuna giocatrice.',true); openForms(); return }
+  FORMS[i]=Object.assign({id:FORMS[i].id,name:FORMS[i].name},snapForm());
+  saveForms(); openForms(); toast('Formazione aggiornata.');
+}
+function delForm(i){
+  if(FDEL!==i){ FDEL=i; FUPD=-1; openForms(); return }
+  FDEL=-1; FORMS.splice(i,1); saveForms(); openForms();
+}
+function recallForm(i){
+  if(S.over){ toast('Partita terminata.',true); return }
+  if(S.pl.length>0){ toast('Si puo\' richiamare solo prima del primo punto del set.',true); return }
+  const f=FORMS[i]; if(!f) return;
+  const by=new Map(ROSTER.map(p=>[p.id,p]));
+  const lineup=f.lineup.map(id=>by.has(id)?pstr(by.get(id)):'');
+  const missing=f.lineup.filter(id=>id&&!by.has(id)).length;
+  const ids=new Set((f.squad||[]).filter(id=>by.has(id)));
+  f.lineup.concat(f.bench||[]).forEach(id=>{ if(by.has(id)) ids.add(id) });
+  S.squad=ROSTER.filter(p=>ids.has(p.id)).map(p=>p.id);
+  S.lineup[S.home]=lineup;
+  S.bq=(f.bench||[]).filter(id=>by.has(id)).map(id=>pstr(by.get(id)));
+  S.subs[S.home]=[];
+  FDEL=-1; FUPD=-1; save(); closeOv();
+  toast('Formazione "'+f.name+'" richiamata.'+(missing?' '+missing+' giocatrici non sono piu\' in rosa: posizione vuota.':''),!!missing);
+}
+
+/* ---------- Formazione avversaria con numeri e nomi (impostazione) ---------- */
+function openOpp(t,focusI){
+  const rows=['1','2','3','4','5','6'].map(l=>{
+    const cur=S.lineup[t][IDX[l]]||'', m=/^\s*(\d+)\s*(.*)$/.exec(cur), num=m?m[1]:'', name=m?m[2]:cur.trim();
+    return `<div class="row"><b class="plb">${l}</b><input class="num" id="on${l}" inputmode="numeric" value="${esc(num)}" placeholder="N."><input class="nm" id="om${l}" value="${esc(name)}" placeholder="Nome"></div>`;
+  }).join('');
+  showOv(`<h2>Formazione ${esc(S.names[t])}</h2>
+    <p class="note">Scrivi numero e nome per ogni posizione (la 1 e' quella in battuta). Il nome e' facoltativo.</p>${rows}
+    <button onclick="saveOpp(${t})">Salva</button><button class="grey" onclick="closeOv()">Annulla</button>`);
+  setTimeout(()=>{ const e=document.getElementById('on'+LBL[focusI]); if(e) try{ e.focus() }catch(_){} },50);
+}
+function saveOpp(t){
+  const arr=[], nums=[];
+  for(const l of ['1','2','3','4','5','6']){
+    const n=document.getElementById('on'+l).value.trim(), m=document.getElementById('om'+l).value.trim();
+    if(n){ if(nums.includes(n)){ toast('Il numero '+n+' e\' scritto due volte: una giocatrice non puo\' stare in due posizioni.',true); return } nums.push(n) }
+    arr[IDX[l]]=(n+' '+m).trim();
+  }
+  S.lineup[t]=arr; save(); closeOv();
 }
 
 /* ---------- Colori delle maglie ----------
@@ -732,6 +895,9 @@ function openSettings(){
     <div class="lbl">Giro continuo con panchina (under 11)</div>
     <div class="opt">${b(!S.cfg.autoRot,'No, cambi a mano','setCfg(\'autoRot\',false)')}${b(S.cfg.autoRot,'Si, entrano in ordine','setCfg(\'autoRot\',true)')}</div>
     <p class="note">Con il giro continuo, ogni volta che la squadra di casa conquista la battuta e gira, chi era in posizione 2 esce in fondo alla panchina e la prima della lista entra in posizione 1, in battuta. Non conta come cambio. L'ordine si decide trascinando i nomi in panchina.</p>
+    <div class="lbl">Formazione avversaria</div>
+    <div class="opt">${b(!S.cfg.oppNames,'Solo numeri (predefinita)',"setCfg('oppNames',false)")}${b(S.cfg.oppNames,'Numeri e nomi',"setCfg('oppNames',true)")}</div>
+    <p class="note">Con "Numeri e nomi" tocchi un dischetto avversario e compili numero e nome delle sei posizioni in una schermata. Con la scelta predefinita scrivi solo il numero nel dischetto.</p>
     <div class="lbl">Limite di battute di fila (under 11)</div>
     <div class="opt">${b(!S.cfg.maxServe,'Nessun limite',"setCfg('maxServe',0)")}${b(S.cfg.maxServe===3,'Massimo 3 punti di fila',"setCfg('maxServe',3)")}</div>
     <p class="note">Con il limite attivo, dopo 3 punti consecutivi sulla propria battuta il servizio passa agli avversari anche se la squadra ha segnato (cambio palla, e gli avversari girano). Se la squadra sbaglia prima, il cambio palla avviene come sempre.</p>
@@ -1037,33 +1203,70 @@ function resetHistory(){ RESETARM=true; openHistory() }
 function delMatch(i){ if(DELARM!==i){ DELARM=i; RESETARM=false; openHistory(); return } DELARM=-1; HIST.splice(i,1); saveHist(); openHistory() }
 
 /* ---------- Backup ---------- */
+function allStore(){
+  const o={};
+  for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.indexOf('pallavolo_')===0) o[k]=localStorage.getItem(k) }
+  return o;
+}
 function backupHTML(){
   return `<p class="note">I dati sono salvati nella memoria di Safari. Se cancelli i dati del sito li perdi: fai ogni tanto un backup.</p>
+    <p class="note">Il backup contiene <b>tutto</b>: storico delle partite (${HIST.length}), rosa (${ROSTER.length}), formazioni salvate (${FORMS.length}), partita in corso, convocate, colori e impostazioni.</p>
     <button onclick="exportBackup()">Esporta backup</button>
     <button onclick="document.getElementById('imp').click()">Importa backup</button>
     <input type="file" id="imp" accept=".json,application/json" style="display:none" onchange="importBackup(this)">
-    <p class="note" style="margin-top:18px">Cancella tutto lo storico delle partite. La rosa non viene toccata.</p>
+    <p class="note" style="margin-top:18px">Cancella tutto lo storico delle partite. La rosa e le formazioni non vengono toccate.</p>
     ${resetBoxHTML()}`;
 }
 async function exportBackup(){
-  const data=JSON.stringify({v:3,hist:HIST,roster:ROSTER,names:S.names},null,1);
-  const file=new File([data],'pallavolo-backup.json',{type:'application/json'});
+  save();
+  const data=JSON.stringify({app:'pallavolo',v:4,date:new Date().toISOString(),store:allStore()},null,1);
+  const file=new File([data],'pallavolo-backup-'+new Date().toISOString().slice(0,10)+'.json',{type:'application/json'});
   if(navigator.canShare && navigator.canShare({files:[file]})){
     try{ await navigator.share({files:[file],title:'Backup pallavolo'}); return }catch(e){ if(e.name==='AbortError') return }
   }
   window.open(URL.createObjectURL(file),'_blank');
 }
+let PENDING=null;
 function importBackup(inp){
   const f=inp.files[0]; if(!f) return;
   const r=new FileReader();
   r.onload=()=>{
     try{
       const d=JSON.parse(r.result);
-      if(!Array.isArray(d.hist)||!Array.isArray(d.roster)) throw 0;
-      HIST=d.hist; ROSTER=d.roster; normRoster(); S.squad=ROSTER.map(p=>p.id); save(); saveHist(); saveRoster(); openHistory(); toast('Backup importato.');
+      let store;
+      if(d.store && typeof d.store==='object'){
+        store={}; Object.keys(d.store).forEach(k=>{ if(k.indexOf('pallavolo_')===0 && typeof d.store[k]==='string') store[k]=d.store[k] });
+        [KEY,HKEY,RKEY,FKEY].forEach(k=>{ if(store[k]!==undefined) JSON.parse(store[k]) });
+        if(!store[KEY] && !store[HKEY] && !store[RKEY]) throw 0;
+      } else if(Array.isArray(d.hist) && Array.isArray(d.roster)){
+        // vecchio formato (solo storico e rosa): le altre cose restano come sono
+        store={}; store[HKEY]=JSON.stringify(d.hist); store[RKEY]=JSON.stringify(d.roster); store.__legacy=true;
+      } else throw 0;
+      const cnt=k=>{ try{ const x=JSON.parse(store[k]); return Array.isArray(x)?x.length:0 }catch(e){ return 0 } };
+      PENDING=store;
+      showOv(`<h2>Importare il backup?</h2>
+        <p>Nel file ci sono: <b>${cnt(HKEY)}</b> partite, <b>${cnt(RKEY)}</b> giocatrici, <b>${cnt(FKEY)}</b> formazioni${store.__legacy?' (backup vecchio: contiene solo storico e rosa)':''}.</p>
+        <p class="note"><b>Attenzione:</b> i dati ${store.__legacy?'di storico e rosa':'di questo dispositivo, partita in corso compresa,'} verranno sostituiti da quelli del file. Se non sei sicura, annulla e prima esporta un backup di quello che hai ora.</p>
+        <button class="red" onclick="applyImport()">Si, sostituisci</button><button class="grey" onclick="PENDING=null;openHistory()">Annulla</button>`);
     }catch(e){ toast('File di backup non valido.',true) }
   };
   r.readAsText(f);
+  inp.value='';
+}
+function applyImport(){
+  const store=PENDING; PENDING=null; if(!store) return;
+  try{
+    if(!store.__legacy){
+      Object.keys(allStore()).forEach(k=>localStorage.removeItem(k));
+      Object.keys(store).forEach(k=>localStorage.setItem(k,store[k]));
+      load(); S.squad=S.squad; 
+    } else {
+      localStorage.setItem(HKEY,store[HKEY]); localStorage.setItem(RKEY,store[RKEY]);
+      load(); S.squad=ROSTER.map(p=>p.id); save();
+    }
+    FDEL=-1; FUPD=-1;
+    openHistory(); render(); toast('Backup importato.');
+  }catch(e){ toast('Importazione non riuscita: '+e.message,true) }
 }
 
 /* ---------- PDF fatto a mano, senza librerie (funziona offline) ---------- */
