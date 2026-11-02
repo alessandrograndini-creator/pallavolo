@@ -6,7 +6,7 @@ const CACHE = 'pallavolo-offline';
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE)
-      .then(c => c.addAll(['./pallavolo.html']).catch(() => {}))
+      .then(c => c.add(new Request('./pallavolo.html', { cache: 'reload' })).catch(() => {}))
       .then(() => self.skipWaiting())
   );
 });
@@ -26,7 +26,7 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     caches.open(CACHE).then(async cache => {
       const hit = await cache.match(req, { ignoreSearch: true });
-      const net = fetch(req).then(res => {
+      const net = fetch(req.url, { cache: 'no-cache' }).then(res => {
         if (res && res.ok) cache.put(req, res.clone());
         return res;
       }).catch(() => null);

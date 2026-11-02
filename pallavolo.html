@@ -193,22 +193,81 @@ th,td{padding:9px;border-bottom:1px solid var(--line);text-align:center}
 .frow{display:flex;flex-wrap:wrap;gap:6px}.frow button{margin:0}
 .plb{flex:0 0 22px;text-align:center;font-size:18px}
 .box button:disabled{opacity:.4}
+
+.top{position:relative;z-index:8}
+.tl0{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.compline{background:transparent;border:1px dashed var(--line);color:var(--muted);border-radius:999px;padding:5px 12px;font-size:14px;font-weight:700;max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.compline.has{border-style:solid;color:var(--text)}
+.menu{align-items:flex-start}
+.menu .undob{border-color:var(--accent);font-weight:800}
+.dd{position:relative}
+.ddb::after{content:" \25BE";font-size:12px}
+.ddp{display:none;position:absolute;top:calc(100% + 6px);left:0;min-width:220px;max-width:calc(100vw - 20px);z-index:30;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px;box-shadow:var(--shadow)}
+.dd.open .ddp{display:block}
+.dd.r .ddp{left:auto;right:0}
+.menu .ddp button{display:block;width:100%;text-align:left;margin:0 0 2px;border:0;background:transparent;font-size:16px;padding:13px 12px;border-radius:10px;white-space:nowrap}
+.menu .ddp button:active{background:var(--card2)}
+.dd.open>.ddb{border-color:var(--accent)}
+.bkwarn{margin:2px 16px 6px;padding:9px 12px;border:1px solid var(--accent);border-radius:12px;font-size:14px;display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--card)}
+.bkwarn button{margin:0;padding:7px 11px;font-size:14px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--text);font-weight:700;white-space:nowrap}
+details.grp{border:1px solid var(--line);border-radius:14px;margin:8px 0;background:var(--card2)}
+details.grp>summary{list-style:none;cursor:pointer;padding:13px 14px;font-weight:800;font-size:17px;display:flex;justify-content:space-between;align-items:center}
+details.grp>summary::-webkit-details-marker{display:none}
+details.grp>summary::after{content:"\25BE";color:var(--muted)}
+details.grp[open]>summary::after{content:"\25B4"}
+details.grp>.gin{padding:0 14px 12px}
+.pbar{display:inline-block;width:46px;height:8px;border-radius:4px;background:var(--line);vertical-align:middle;margin-right:4px;overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--accent)}
+.board{position:fixed;inset:0;z-index:20;background:#05070f;color:#fff;display:none;flex-direction:column;padding:14px 18px;touch-action:manipulation}
+.bd-top{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:clamp(16px,3vw,28px);font-weight:800;color:#c9d3ea}
+.bd-top button{background:#18203a;color:#fff;border:1px solid #33406a;border-radius:12px;padding:10px 16px;font-size:16px;font-weight:700}
+.bd-main{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:center;min-height:0}
+.bd-t{text-align:center;min-width:0}
+.bd-n{font-size:clamp(22px,5vw,64px);font-weight:900;padding-bottom:6px;border-bottom:8px solid var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bd-s{font-size:clamp(70px,min(30vw,40vh),520px);font-weight:900;line-height:1;color:var(--c);font-variant-numeric:tabular-nums;margin:2vh 0}
+.bd-set{font-size:clamp(18px,3.4vw,40px);font-weight:800;color:#c9d3ea}
+.bd-sv{height:clamp(30px,5vw,60px);margin-top:1vh}
+.bd-sv .ball{position:static;width:auto;height:100%;top:auto;right:auto}
+@media (orientation:portrait){.bd-main{grid-template-columns:1fr;grid-template-rows:1fr 1fr}.bd-s{font-size:clamp(90px,min(40vw,24vh),520px)}}
+
+.serve span.ap{background:#e11d48;margin-left:6px}
+:root[data-layout="phone"] .serve{height:auto;min-height:24px;display:flex;flex-wrap:wrap;justify-content:center;gap:4px}
+:root[data-layout="phone"] .serve span.ap{margin-left:0}
+.lock{position:fixed;inset:0;z-index:70;background:rgba(5,7,15,.97);color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none;padding:20px}
+.lk-sc{font-size:clamp(56px,16vw,150px);font-weight:900;font-variant-numeric:tabular-nums;color:#8ea0c9}
+.lk-n{font-size:clamp(16px,3vw,26px);color:#8ea0c9;font-weight:700}
+.lk-t{font-size:clamp(20px,4vw,34px);font-weight:800}
+.lk-b{position:relative;overflow:hidden;background:#18203a;color:#fff;border:2px solid #4a5a8f;border-radius:18px;padding:20px 30px;font-size:clamp(17px,3vw,24px);font-weight:800;min-width:min(80vw,380px)}
+.lk-p{position:absolute;left:0;bottom:0;height:7px;width:0;background:var(--accent,#ff9a3c)}
 </style>
 </head>
 <body>
 <div class="top">
-  <div class="badge" id="title">Set 1</div>
-  <div class="menu">
+  <div class="tl0"><div class="badge" id="title">Set 1</div><button class="compline" id="compline" onclick="openComp()"></button><button class="compline has" id="venueline" onclick="openComp()" style="display:none"></button></div>
+  <div class="menu" id="menu">
+    <button class="undob" onclick="undo()">Annulla</button>
+    <button onclick="openLock()">Blocca</button>
+    <div class="dd"><button class="ddb" onclick="toggleDD(this)">Partita</button><div class="ddp">
+      <button onclick="closeDD();openComp()">Competizione e sede</button>
+      <button onclick="closeDD();openBoard()">Tabellone</button>
+      <button onclick="closeDD();openSummary()">Riepilogo</button>
+      <button onclick="closeDD();newMatch()">Nuova partita</button></div></div>
+    <div class="dd"><button class="ddb" onclick="toggleDD(this)">Squadra</button><div class="ddp">
+      <button onclick="closeDD();openNames()">Nome squadre</button>
+      <button onclick="closeDD();openColors()">Colori maglia</button>
+      <button onclick="closeDD();openRoster()">Rosa</button>
+      <button onclick="closeDD();openSquad()">Convocate</button>
+      <button onclick="closeDD();openForms()">Formazioni</button>
+      <button onclick="closeDD();openPStats()">Statistiche giocatrici</button></div></div>
+    <div class="dd"><button class="ddb" onclick="toggleDD(this)">Archivio</button><div class="ddp">
+      <button onclick="closeDD();openHist('list')">Partite giocate</button>
+      <button onclick="closeDD();openHist('stat')">Statistiche squadra</button>
+      <button onclick="closeDD();openHist('bk')">Backup e dati</button></div></div>
     <button onclick="openSettings()">Impostazioni</button>
-    <button onclick="openRoster()">Rosa</button>
-    <button onclick="openSquad()">Convocate</button>
-    <button onclick="openForms()">Formazioni</button>
-    <button onclick="openHistory()">Storico</button>
-    <button onclick="undo()">Annulla</button>
-    <button onclick="openSummary()">Riepilogo</button>
-    <button onclick="newMatch()">Nuova partita</button>
   </div>
 </div>
+<div class="bkwarn" id="bkwarn" style="display:none"></div>
+<div class="bkwarn" id="updwarn" style="display:none"></div>
 
 <div class="main">
   <div class="team" id="t0"></div>
@@ -222,6 +281,8 @@ th,td{padding:9px;border-bottom:1px solid var(--line);text-align:center}
   <button onclick="endSet(true)">Chiudi set manualmente</button>
 </div>
 
+<div class="board" id="board"></div>
+<div class="lock" id="lock"></div>
 <div class="toast" id="toast"></div>
 <div class="overlay" id="ov"><div class="box" id="box"></div></div>
 
@@ -246,6 +307,7 @@ function fresh(names,cfg,colors){
     subs:[[],[]], subLog:[], tos:[0,0], pl:[], sv0:null,
     pts:[0,0], sets:[0,0], history:[], log:[], setNum:1, server:0,
     lineup:[ ['','','','','',''], ['1','2','3','4','5','6'] ],
+    pst:{}, pset:{}, run:0, cc:false, comp:((typeof S!=='undefined'&&S&&S.comp)||''), round:((typeof S!=='undefined'&&S&&S.round)||''), venue:((typeof S!=='undefined'&&S&&S.venue)||''),
     over:false, saved:false, date:new Date().toISOString()
   };
 }
@@ -269,6 +331,18 @@ function load(){
   if(S.cfg.autoRot===undefined) S.cfg.autoRot=false;
   if(S.cfg.maxServe===undefined) S.cfg.maxServe=0;
   if(S.cfg.oppNames===undefined) S.cfg.oppNames=false;
+  if(S.cfg.pstats===undefined) S.cfg.pstats=true;
+  if(S.cfg.alerts===undefined) S.cfg.alerts=true;
+  if(S.cfg.ccMode===undefined) S.cfg.ccMode='off';
+  if(S.cc===undefined) S.cc=false;
+  if(S.cfg.wake===undefined) S.cfg.wake=true;
+  if(!S.pst) S.pst={};
+  if(!S.pset) S.pset={};
+  if(S.run===undefined) S.run=0;
+  if(S.comp===undefined) S.comp='';
+  if(S.venue===undefined) S.venue='';
+  if(S.round===undefined) S.round='';
+  try{ const c=JSON.parse(localStorage.getItem(CKEY)); if(Array.isArray(c)) COMPS=c }catch(e){}
   if(!Array.isArray(S.bq)) S.bq=[];
   setTheme(localStorage.getItem(TKEY)||'dark');
   applyLayout();
@@ -321,8 +395,10 @@ function setWon(t){
    Se non era al servizio, il servizio passa a lei e la formazione ruota in senso orario. */
 function point(t){
   if(S.over) return;
-  S.history.push(JSON.stringify({pts:S.pts,server:S.server,lineup:S.lineup,subs:S.subs,bq:S.bq,pl:S.pl.length,sv0:S.sv0}));
+  S.history.push(JSON.stringify({pts:S.pts,server:S.server,lineup:S.lineup,subs:S.subs,bq:S.bq,pl:S.pl.length,sv0:S.sv0,pst:S.pst,pset:S.pset,run:S.run}));
   if(S.pl.length===0){ S.sv0=S.server; S.ts=Date.now(); S.lu0=S.lineup[S.home].slice(); S.bq0=benchOf(S.home) } // chi batte all'inizio del set e a che ora
+  trackBefore(t);
+  const wasSrv=S.server;
   S.pts[t]++;
   const side=(S.server!==t); // true = cambio palla: la squadra che segna prende la battuta
   if(side){
@@ -345,9 +421,11 @@ function point(t){
       else toast('Terza battuta di fila: cambio palla.');
     }
   }
+  trackAfter(wasSrv);
   S.pl.push({t:t,a:S.pts[0],b:S.pts[1],side:side,fc:fc});
   if(setWon(t)) endSet(false,t);
   save(); render();
+  checkCourtChange();
 }
 
 /* Giro continuo (under 11): quando la squadra di casa conquista la battuta e gira, chi era in posizione 2
@@ -364,6 +442,8 @@ function autoRotate(t,outV){
 function undo(){
   if(!S.history.length) return;
   const p=JSON.parse(S.history.pop());
+  if(p.pst!==undefined){ S.pst=p.pst; S.pset=p.pset||{}; S.run=p.run||0 }
+  if(S.cc && Math.max(p.pts[0],p.pts[1])<ccAt()) S.cc=false;
   S.pts=p.pts; S.server=p.server; S.lineup=p.lineup; if(p.subs) S.subs=p.subs; if(p.bq) S.bq=p.bq;
   if(p.pl!==undefined){ S.pl=S.pl.slice(0,p.pl); S.sv0=(p.sv0===undefined?null:p.sv0) }
   save(); render();
@@ -380,7 +460,7 @@ function endSet(manual,winner){
   S.log.push({n:S.setNum,a:S.pts[0],b:S.pts[1],pl:S.pl,sv0:S.sv0,ts:S.ts||null,te:Date.now(),lu:S.lu0||null,bq:S.bq0||[],sb:subsOut(S.subs[S.home])});
   if(matchDecided()){ finishMatch(); return }
   const prevSv=S.sv0; // chi aveva battuto per primo nel set appena chiuso
-  S.setNum++; S.pts=[0,0]; S.history=[]; S.subs=[[],[]]; S.tos=[0,0]; S.pl=[]; S.sv0=null; S.ts=null; S.lu0=null; S.bq0=null; // cambi e timeout si azzerano a ogni set
+  S.setNum++; S.pts=[0,0]; S.history=[]; S.subs=[[],[]]; S.tos=[0,0]; S.pl=[]; S.sv0=null; S.ts=null; S.lu0=null; S.bq0=null; S.pset={}; S.run=0; S.cc=false; // cambi e timeout si azzerano a ogni set
   S.server=(prevSv===0||prevSv===1)?1-prevSv:(w===0?1:0); // battuta alternata; prima del primo punto si puo' cambiare
   save(); render();
 }
@@ -397,6 +477,7 @@ function finishMatch(){
       bestOf:S.cfg.bestOf,
       col:[S.colors[h],S.colors[1-h]],
       squad:squadNames(), rot:!!S.cfg.autoRot,
+      comp:S.comp||'', round:S.round||'', venue:S.venue||'', pst:(S.cfg.pstats&&Object.keys(S.pst||{}).length)?JSON.parse(JSON.stringify(S.pst)):null, pn:pnMap(S.pst),
       // sv = chi batte per primo (0 = casa); pts = un numero per punto: (0 casa / 1 ospiti)*2 + (1 se e' cambio palla)
       log:S.log.map(x=>({n:x.n,h:h===0?x.a:x.b,a:h===0?x.b:x.a,
         sv:(x.sv0==null?null:(x.sv0===h?0:1)), ts:x.ts||null, te:x.te||null, lu:x.lu||null, bq:x.bq||[], sb:x.sb||[],
@@ -436,9 +517,9 @@ function setServer(t){
 function teamHTML(t){
   return `
     <input class="name" value="${esc(S.names[t])}" onchange="setName(${t},this.value)">
-    <div class="sets"><span class="setlbl">SET VINTI</span><span class="setnum">${S.sets[t]}</span>${t===S.home?'<span class="setlbl">&middot; CASA</span>':''}</div>
+    <div class="sets"><span class="setlbl">SET VINTI</span><span class="setnum">${S.sets[t]}</span>${t===S.home?'<span class="setlbl">&middot; NOI</span>':''}</div>
     <button class="scorebtn" onclick="point(${t})"><div class="score">${S.pts[t]}</div><div class="hint">tocca per segnare il punto</div></button>
-    <div class="serve">${S.server===t?'<span>AL SERVIZIO</span>':((!S.over&&S.pl.length===0)?`<button class="srvbtn" onclick="setServer(${t})">Batte per prima</button>`:'')}</div>
+    <div class="serve">${S.server===t?'<span>AL SERVIZIO</span>':((!S.over&&S.pl.length===0)?`<button class="srvbtn" onclick="setServer(${t})">Batte per prima</button>`:'')}${alertPill(t)}</div>
     <button class="tobtn" ${(S.over||toLeft(t)<=0)?'disabled':''} onclick="callTimeout(${t})">TIMEOUT (${toLeft(t)} su 2)</button>
 `;
 }
@@ -576,7 +657,7 @@ function doSub(t,pos,inV){
   const outV=S.lineup[t][pos];
   const err=canSub(t,outV,inV);
   if(err){ toast(err,true); return false }
-  S.history.push(JSON.stringify({pts:S.pts,server:S.server,lineup:S.lineup,subs:S.subs,bq:S.bq,pl:S.pl.length,sv0:S.sv0}));
+  S.history.push(JSON.stringify({pts:S.pts,server:S.server,lineup:S.lineup,subs:S.subs,bq:S.bq,pl:S.pl.length,sv0:S.sv0,pst:S.pst,pset:S.pset,run:S.run}));
   const pairOut=S.subs[t].find(s=>s.in===outV && !s.done);
   if(pairOut && pairOut.out===inV){
     pairOut.done=true; // rientro: la coppia e' chiusa
@@ -732,6 +813,266 @@ function setPlayer(t,i,v){
 }
 
 
+
+
+/* ---------- Versione e aggiornamenti ----------
+   APP_VERSION va cambiata a ogni nuova versione del file: serve a capire quale versione sta girando. */
+const APP_VERSION='2026.11.02-b';
+let UPDAVAIL=false;
+function swReady(){ return !!(('serviceWorker' in navigator) && navigator.serviceWorker.controller && /^https?:$/.test(location.protocol)) }
+async function onlineVersion(){
+  const r=await fetch(location.pathname+'?c='+Date.now(),{cache:'no-store'});
+  if(!r.ok) throw new Error('http');
+  const m=/const APP_VERSION='([^']+)'/.exec(await r.text());
+  return m?m[1]:null;
+}
+async function checkUpdate(){
+  if(!swReady()){ toast('Il controllo funziona solo aprendo l\'app dal suo indirizzo online.',true); return }
+  if(navigator.onLine===false){ toast('Serve internet per cercare aggiornamenti.',true); return }
+  let v; try{ v=await onlineVersion() }catch(e){ toast('Non riesco a contattare il sito. Riprova con piu\' segnale.',true); return }
+  if(v && v===APP_VERSION){ toast('Hai gia\' la versione piu\' recente ('+APP_VERSION+').'); return }
+  showOv(`<h2>Aggiornamento disponibile</h2><p>Installata: <b>${esc(APP_VERSION)}</b><br>Online: <b>${esc(v||'sconosciuta')}</b></p>
+    <p class="note">Rosa, formazioni e storico non si toccano. La partita in corso resta com'e'. L'app si ricarica da sola.</p>
+    <button onclick="doUpdate()">Aggiorna ora</button><button class="grey" onclick="closeOv()">Non ora</button>`);
+}
+async function doUpdate(){
+  // prima controllo che il sito risponda: senza rete non cancello la copia salvata, o l'app non si aprirebbe piu'
+  try{ await onlineVersion() }catch(e){ toast('Sito non raggiungibile: l\'app resta com\'e\'.',true); return }
+  try{
+    if('serviceWorker' in navigator){ const rs=await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r=>r.unregister())) }
+    if(window.caches){ const ks=await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))) }
+  }catch(e){}
+  location.replace(location.pathname+'?v='+Date.now());
+}
+async function autoCheckUpdate(){
+  if(!swReady()||navigator.onLine===false) return;
+  try{
+    const v=await onlineVersion();
+    if(v && v!==APP_VERSION){ UPDAVAIL=true; const el=document.getElementById('updwarn'); if(el){ el.style.display='flex'; el.innerHTML=`<span>E' disponibile una versione nuova dell'app (${esc(v)}).</span><span style="display:flex;gap:6px"><button onclick="checkUpdate()">Aggiorna</button><button onclick="document.getElementById('updwarn').style.display='none'">Dopo</button></span>` } }
+  }catch(e){}
+}
+function versionHTML(){
+  return `<div class="lbl">Versione dell'app</div><p style="margin:4px 0 8px">Questa copia: <b>${esc(APP_VERSION)}</b></p>
+    <button onclick="checkUpdate()">Controlla aggiornamenti</button>
+    <p class="note">Cerca la versione nuova online e, se c'e', la installa senza toccare i tuoi dati.</p>`;
+}
+
+/* ---------- Blocco schermo anti-tocco ---------- */
+let LOCK=false, lkT=null;
+function openLock(){
+  closeDD(); LOCK=true;
+  const el=document.getElementById('lock');
+  el.innerHTML=`<div class="lk-n">${esc(S.names[0])} - ${esc(S.names[1])}</div><div class="lk-sc">${S.pts[0]} - ${S.pts[1]}</div><div class="lk-t">Schermo bloccato</div>
+    <button class="lk-b" id="lkb">Tieni premuto per sbloccare<span class="lk-p" id="lkp"></span></button>`;
+  el.style.display='flex';
+  const b=document.getElementById('lkb'), p=document.getElementById('lkp');
+  const stop=()=>{ clearTimeout(lkT); p.style.transition='none'; p.style.width='0' };
+  b.addEventListener('pointerdown',e=>{
+    e.preventDefault(); stop(); void p.offsetWidth;
+    p.style.transition='width .9s linear'; p.style.width='100%';
+    lkT=setTimeout(()=>{ LOCK=false; el.style.display='none'; el.innerHTML='' },900);
+  });
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,stop));
+  el.addEventListener('contextmenu',e=>e.preventDefault());
+}
+
+/* ---------- Avvisi: set point, match point, cambio campo ---------- */
+function wouldWin(t){ S.pts[t]++; const w=setWon(t); S.pts[t]--; return w }
+function alertPill(t){
+  if(S.cfg.alerts===false||S.over||!wouldWin(t)) return '';
+  const mp=S.cfg.playAll?(S.log.length+1>=S.cfg.bestOf):(S.sets[t]+1>=setsToWin());
+  return `<span class="ap">${mp?'MATCH POINT':'SET POINT'}</span>`;
+}
+/* Nel set decisivo da 15 punti le squadre cambiano campo quando la prima arriva a 8. */
+function ccAt(){ return (S.setNum===S.cfg.bestOf && S.cfg.bestOf>1 && S.cfg.lastTarget===15)?8:0 }
+function checkCourtChange(){
+  const m=S.cfg.ccMode||'off';
+  if(m==='off'||S.over||S.cc) return;
+  const at=ccAt(); if(!at||Math.max(S.pts[0],S.pts[1])<at) return;
+  S.cc=true; save();
+  const who=S.names[S.pts[0]>=S.pts[1]?0:1];
+  try{ navigator.vibrate&&navigator.vibrate([200,100,200]) }catch(e){}
+  if(m==='auto'){ swapSides(); toast('Cambio campo automatico: '+who+' ha raggiunto '+at+' punti.'); return }
+  showOv(`<h2>CAMBIO CAMPO</h2><p style="font-size:20px">${esc(who)} ha raggiunto ${at} punti: nel set decisivo le squadre cambiano campo.</p>
+    <button onclick="doCC()">Cambia campo ora</button><button class="grey" onclick="closeOv()">Non ora</button>`);
+}
+function doCC(){ swapSides(); closeOv() }
+
+/* ---------- Menu a tendina ---------- */
+function closeDD(){ document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open')) }
+function toggleDD(btn){
+  const dd=btn.parentNode, was=dd.classList.contains('open');
+  closeDD();
+  if(was) return;
+  dd.classList.remove('r'); dd.classList.add('open');
+  const p=dd.querySelector('.ddp').getBoundingClientRect();
+  if(p.right>window.innerWidth-8) dd.classList.add('r');
+}
+document.addEventListener('pointerdown',e=>{ if(!(e.target.closest&&e.target.closest('.dd'))) closeDD() });
+function openHist(tab){ histTab=tab; DELARM=-1; RESETARM=false; openHistory() }
+
+/* ---------- Competizione (campionato, torneo, ...) ---------- */
+const CKEY='pallavolo_competizioni_v1';
+let COMPS=['Campionato','Torneo','Amichevole'], CDEL=-1;
+function saveComps(){ try{ localStorage.setItem(CKEY,JSON.stringify(COMPS)) }catch(e){} }
+function compText(c,r){ return c?(c+(r?' - '+r:'')):(r||'') }
+/* ---------- Sede: in casa o fuori casa ---------- */
+function venueText(v){ return v==='casa'?'In casa':(v==='fuori'?'Fuori casa':'') }
+function metaLine(o){ return [compText(o.comp,o.round),venueText(o.venue)].filter(Boolean).join(' | ') }
+function setVenue(v){ S.venue=v; save(); render(); openComp() }
+let VFILTER='';
+
+function openComp(){
+  const chips=COMPS.map((c,i)=>`<button class="${S.comp===c?'':'grey'}" onclick="pickComp(${i})">${esc(c)}</button>`).join('')
+    +`<button class="${!S.comp?'':'grey'}" onclick="pickComp(-1)">Nessuna</button>`;
+  const rows=COMPS.map((c,i)=>`<div class="row"><span style="flex:1">${esc(c)}</span><button class="red sm" onclick="delComp(${i})">${CDEL===i?'Conferma?':'Togli'}</button></div>`).join('');
+  showOv(`<h2>Competizione e sede</h2>
+    <p class="note">Scegli a quale competizione appartiene questa partita. Il nome compare in alto, nel riepilogo, nel PDF e nello storico, dove puoi anche filtrare le statistiche. Resta uguale quando inizi una nuova partita.</p>
+    <div class="opt">${chips}</div>
+    <div class="lbl">Dove si gioca</div>
+    <div class="opt"><button class="${S.venue==='casa'?'':'grey'}" onclick="setVenue('casa')">In casa</button><button class="${S.venue==='fuori'?'':'grey'}" onclick="setVenue('fuori')">Fuori casa</button><button class="${!S.venue?'':'grey'}" onclick="setVenue('')">Non indicato</button></div>
+    <div class="lbl">Aggiungi una competizione tua</div>
+    <div class="row"><input class="nm" id="cnew" placeholder="es. Coppa Lombardia"><button onclick="addComp()">Aggiungi</button></div>
+    <div class="lbl">Giornata o fase (facoltativo)</div>
+    <input id="crd" style="width:100%" value="${esc(S.round||'')}" placeholder="es. 3a giornata, girone B, finale" onchange="S.round=this.value.trim();save();render()">
+    <div class="lbl">Il tuo elenco</div>${rows||'<p class="note">Vuoto.</p>'}
+    <p class="note">"Togli" toglie il nome dall'elenco (tocca due volte). Le partite gia' salvate conservano il loro nome.</p>
+    <button onclick="closeOv()">Fatto</button>`);
+}
+function pickComp(i){ S.comp=i<0?'':COMPS[i]; save(); render(); openComp() }
+function addComp(){
+  const v=document.getElementById('cnew').value.trim(); if(!v) return;
+  if(!COMPS.some(c=>c.toLowerCase()===v.toLowerCase())){ COMPS.push(v); saveComps() }
+  S.comp=COMPS.find(c=>c.toLowerCase()===v.toLowerCase()); save(); render(); openComp();
+}
+function delComp(i){
+  if(CDEL!==i){ CDEL=i; openComp(); return }
+  CDEL=-1; COMPS.splice(i,1); saveComps(); openComp();
+}
+
+/* ---------- Nome squadre e colori maglia ---------- */
+function openNames(){
+  const row=t=>`<div class="lbl">${t===S.home?'La nostra squadra (con la rosa)':'Avversari'}</div><input style="width:100%" value="${esc(S.names[t])}" onchange="setName(${t},this.value)">`;
+  showOv(`<h2>Nome squadre</h2>${row(S.home)}${row(1-S.home)}<button onclick="closeOv()">Fatto</button>`);
+}
+function openColors(){
+  showOv(`<h2>Colori maglia</h2>${colorRow(0)}${colorRow(1)}<button onclick="closeOv()">Fatto</button>`);
+}
+
+/* ---------- Statistiche giocatrici: minutaggio e battuta ----------
+   Si registra da sole mentre si segna, senza nessun tocco in piu'. Per ogni giocatrice della rosa:
+   sets = set in cui ha giocato, pp = punti giocati (scambi mentre era in campo), st = turni di battuta,
+   ps = punti fatti mentre batteva, best = serie piu' lunga in un solo turno. */
+function pstat(id){ return S.pst[id]||(S.pst[id]={sets:0,pp:0,st:0,ps:0,best:0}) }
+function trackBefore(t){
+  if(!S.cfg.pstats || !ROSTER.length) return;
+  const hm=S.home, l=S.lineup[hm], srvId=idOfStr(l[5]);
+  if(S.pl.length===0 && S.server===hm){ S.run=0; if(srvId) pstat(srvId).st++ }
+  l.forEach(v=>{ const id=idOfStr(v); if(!id) return; const p=pstat(id); p.pp++; if(!S.pset[id]){ S.pset[id]=1; p.sets++ } });
+  if(S.server===hm){
+    if(t===hm){ S.run++; if(srvId){ const p=pstat(srvId); p.ps++; if(S.run>p.best) p.best=S.run } }
+    else S.run=0;
+  }
+}
+function trackAfter(was){
+  if(!S.cfg.pstats || !ROSTER.length) return;
+  const hm=S.home;
+  if(S.server===hm && was!==hm){ S.run=0; const id=idOfStr(S.lineup[hm][5]); if(id) pstat(id).st++ }
+}
+function pnMap(pst){ const o={}; Object.keys(pst||{}).forEach(id=>{ const p=ROSTER.find(q=>q.id===id); if(p) o[id]=pstr(p) }); return o }
+let PSTAB='match', PSCOMP='';
+function pName(id,pn){ const p=ROSTER.find(q=>q.id===id); return p?pstr(p).trim():(((pn&&pn[id])||id)+'').trim() }
+function openPStats(){
+  if(!S.cfg.pstats){
+    showOv(`<h2>Statistiche giocatrici</h2><p>Questa funzione e' spenta. Accesa, registra da sola minutaggio e battute, senza tocchi in piu'.</p>
+      <button onclick="setCfg('pstats',true);openPStats()">Accendi</button><button class="grey" onclick="closeOv()">Chiudi</button>`); return }
+  const t=(id,l)=>`<button class="${PSTAB===id?'on':'grey'}" onclick="PSTAB='${id}';openPStats()">${l}</button>`;
+  let rows=[], total=0, extra='';
+  if(PSTAB==='match'){
+    total=S.log.reduce((n,x)=>n+x.a+x.b,0)+S.pts[0]+S.pts[1];
+    const ids=new Set(pool().map(p=>p.id)); Object.keys(S.pst||{}).forEach(id=>ids.add(id));
+    rows=Array.from(ids).map(id=>Object.assign({id:id,name:pName(id),m:1,tot:total},S.pst[id]||{sets:0,pp:0,st:0,ps:0,best:0}));
+  } else {
+    const comps=Array.from(new Set(HIST.filter(m=>m.pst).map(m=>m.comp||''))).filter(Boolean);
+    if(PSCOMP && !comps.includes(PSCOMP)) PSCOMP='';
+    extra=comps.length?`<div class="opt"><button class="${!PSCOMP?'':'grey'}" onclick="PSCOMP='';openPStats()">Tutte</button>${comps.map(c=>`<button class="${PSCOMP===c?'':'grey'}" onclick="PSCOMP=this.dataset.c;openPStats()" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>`:'';
+    const agg={};
+    HIST.filter(m=>m.pst && (!PSCOMP||m.comp===PSCOMP)).forEach(m=>{
+      const tot=m.log.reduce((n,x)=>n+x.h+x.a,0);
+      Object.keys(m.pst).forEach(id=>{
+        const p=m.pst[id], a=agg[id]||(agg[id]={id:id,name:pName(id,m.pn),m:0,tot:0,sets:0,pp:0,st:0,ps:0,best:0});
+        a.m++; a.tot+=tot; a.sets+=p.sets; a.pp+=p.pp; a.st+=p.st; a.ps+=p.ps; if(p.best>a.best) a.best=p.best;
+      });
+    });
+    rows=Object.values(agg);
+  }
+  rows.sort((a,b)=>(parseInt(a.name)||999)-(parseInt(b.name)||999));
+  const hist=PSTAB!=='match';
+  const body=rows.length?`<div class="anwrap"><table class="antab"><tr><th style="text-align:left">Giocatrice</th>${hist?'<th>Partite</th>':''}<th>Set</th><th>Punti giocati</th><th>Presenza</th><th>Turni batt.</th><th>Punti in batt.</th><th>Serie max</th></tr>
+    ${rows.map(r=>{ const pc=r.tot?Math.round(r.pp/r.tot*100):0; return `<tr><td style="text-align:left"><b>${esc(r.name)}</b></td>${hist?`<td>${r.m}</td>`:''}<td>${r.sets}</td><td>${r.pp}</td><td style="white-space:nowrap"><span class="pbar"><i style="width:${pc}%"></i></span>${pc}%</td><td>${r.st}</td><td>${r.ps}</td><td>${r.best}</td></tr>` }).join('')}</table></div>`
+    :`<p class="note">${hist?'Nessun dato: le statistiche si registrano dalle partite giocate dopo questo aggiornamento, quando la funzione e\' accesa.':'Ancora nessun punto in questa partita.'}</p>`;
+  showOv(`<h2>Statistiche giocatrici</h2><div class="tabs">${t('match','Partita in corso')}${t('hist','Storico')}</div>${extra}${body}
+    <p class="note"><b>Presenza</b>: punti giocati sul totale dei punti della partita. <b>Turni</b>: volte che ha preso la battuta. <b>Punti in batt.</b>: punti fatti mentre batteva. <b>Serie max</b>: punti di fila piu' lunghi in un solo turno di battuta. Valgono per la squadra con la rosa; le partite salvate prima dell'aggiornamento non hanno questi dati.</p>
+    <button class="grey" onclick="closeOv()">Chiudi</button>`);
+}
+
+/* ---------- Tabellone per il pubblico ---------- */
+let BOARD=false;
+function openBoard(){ BOARD=true; const el=document.getElementById('board'); el.style.display='flex'; drawBoard(); try{ if(el.requestFullscreen) el.requestFullscreen().catch(()=>{}) }catch(e){} }
+function closeBoard(){ BOARD=false; document.getElementById('board').style.display='none'; try{ if(document.fullscreenElement&&document.exitFullscreen) document.exitFullscreen() }catch(e){} }
+document.addEventListener('fullscreenchange',()=>{ if(BOARD && !document.fullscreenElement){ /* resta visibile: si chiude solo col pulsante */ } });
+function drawBoard(){
+  if(!BOARD) return;
+  const el=document.getElementById('board');
+  const col=t=>{ let c=teamColor(t); return hexLum(c)<.2?'#ffffff':c };
+  const side=t=>`<div class="bd-t" style="--c:${col(t)}"><div class="bd-n">${esc(S.names[t])}</div><div class="bd-s">${S.pts[t]}</div><div class="bd-set">Set vinti: <b>${S.sets[t]}</b></div><div class="bd-sv">${(S.server===t&&!S.over)?BALL:''}</div></div>`;
+  el.innerHTML=`<div class="bd-top"><span>${esc(metaLine(S))}</span><span>${S.over?'Partita terminata':'Set '+S.setNum+' - a '+target()}</span><button onclick="closeBoard()">Chiudi</button></div>
+    <div class="bd-main">${side(0)}${side(1)}</div>`;
+}
+(function(){ const _r=render; render=function(){ _r.apply(this,arguments); try{ drawBoard(); updTop(); updBkWarn() }catch(e){} } })();
+function updTop(){
+  const c=document.getElementById('compline'); if(!c) return;
+  const tx=compText(S.comp,S.round), vt=venueText(S.venue), v=document.getElementById('venueline');
+  c.textContent=tx||(vt?'':'+ Competizione e sede'); c.className='compline'+(tx?' has':''); c.style.display=(tx||!vt)?'':'none';
+  if(v){ v.textContent=vt; v.style.display=vt?'':'none'; v.style.color=S.venue==='fuori'?'var(--accent)':'var(--text)' }
+}
+
+/* ---------- Protezione dei dati ---------- */
+const BKKEY='pallavolo_ultimo_backup';
+let BKSNOOZE=false, PERSIST=null;
+function lastBackup(){ try{ const v=localStorage.getItem(BKKEY); return v?new Date(v):null }catch(e){ return null } }
+function bkDays(){ const d=lastBackup(); return d?Math.floor((Date.now()-d.getTime())/86400000):null }
+function hasData(){ return HIST.length>0 || ROSTER.length>0 || FORMS.length>0 }
+function updBkWarn(){
+  const el=document.getElementById('bkwarn'); if(!el) return;
+  const d=bkDays();
+  if(BKSNOOZE || !hasData() || (d!==null && d<7)){ el.style.display='none'; return }
+  el.style.display='flex';
+  el.innerHTML=`<span>${d===null?'Non hai ancora fatto nessun backup.':'Ultimo backup: '+d+' giorni fa.'} Se Safari cancella i dati del sito, rosa e storico si perdono.</span><span style="display:flex;gap:6px"><button onclick="openHist('bk')">Backup</button><button onclick="BKSNOOZE=true;updBkWarn()">Dopo</button></span>`;
+}
+function bkStatusHTML(){
+  const d=lastBackup(), n=bkDays();
+  const st=d?('Ultimo backup esportato: <b>'+d.toLocaleDateString('it-IT')+'</b> ('+(n===0?'oggi':n+' giorni fa')+')'):'<b>Nessun backup ancora esportato.</b>';
+  const pr=PERSIST===true?'attiva':(PERSIST===false?'non concessa dal browser':'non disponibile');
+  return `<p class="note">${st}. Protezione della memoria del browser: ${pr}. Il backup va conservato fuori dall'iPad (iCloud Drive, e-mail, Mac).</p>`;
+}
+async function askPersist(){
+  try{ if(navigator.storage&&navigator.storage.persist){ PERSIST=await navigator.storage.persisted(); if(!PERSIST) PERSIST=await navigator.storage.persist() } }catch(e){}
+}
+
+/* ---------- Schermo sempre acceso ---------- */
+let WL=null;
+async function wakeOn(){
+  try{
+    if(!S||!S.cfg.wake){ if(WL){ await WL.release() } WL=null; return }
+    if(!('wakeLock' in navigator)||WL) return;
+    WL=await navigator.wakeLock.request('screen');
+    WL.addEventListener('release',()=>{ WL=null });
+  }catch(e){ WL=null }
+}
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') wakeOn() });
+document.addEventListener('pointerdown',()=>{ if(!WL) wakeOn() },{passive:true});
+
 /* ---------- Formazioni salvate ----------
    Una formazione ricorda: le sei in campo (con la posizione), l'ordine della panchina e le convocate.
    Si salva dalle giocatrici che ci sono in campo in quel momento e si richiama con un tocco prima del primo punto del set.
@@ -874,22 +1215,26 @@ function offlineNote(){
   const ok=('serviceWorker' in navigator)&&navigator.serviceWorker.controller;
   return `<div class="lbl">Uso senza internet</div><p class="note">${ok?'<b>Pronto.</b> L\'app e\' salvata nel dispositivo e si apre anche senza rete.':'Non ancora pronto. Apri l\'app una volta con internet, chiudila e riaprila: qui deve comparire "Pronto".'}</p>`;
 }
+let SETOPEN='partita';
 function openSettings(){
   const th=document.documentElement.getAttribute('data-theme');
   const started=S.pts[0]||S.pts[1]||S.sets[0]||S.sets[1];
   const b=(on,label,fn)=>`<button class="${on?'':'grey'}" onclick="${fn}">${label}</button>`;
-  showOv(`<h2>Impostazioni</h2>
-    <div class="lbl">Tema</div>
-    <div class="opt">${b(th==='dark','Scuro',"setTheme('dark');openSettings()")}${b(th==='light','Chiaro',"setTheme('light');openSettings()")}</div>
-    <div class="lbl">Schermo</div>
-    <div class="opt">${b(layoutPref()==='auto','Automatico',"setLayout('auto')")}${b(layoutPref()==='pad','iPad',"setLayout('pad')")}${b(layoutPref()==='phone','iPhone',"setLayout('phone')")}</div>
-    ${colorRow(0)}${colorRow(1)}
+  const grp=(id,title,inner)=>`<details class="grp" ${SETOPEN===id?'open':''} ontoggle="if(this.open)SETOPEN='${id}'"><summary>${title}</summary><div class="gin">${inner}</div></details>`;
+  const partita=`
     <div class="lbl">Formato partita</div>
     <div class="opt">${b(S.cfg.bestOf===5,'3 set su 5','setCfg(\'bestOf\',5)')}${b(S.cfg.bestOf===3,'2 set su 3 (under 11)','setCfg(\'bestOf\',3)')}${b(S.cfg.bestOf===1,'Set unico','setCfg(\'bestOf\',1)')}</div>
     <div class="lbl">Punti dell'ultimo set</div>
     <div class="opt">${b(S.cfg.lastTarget===15,'Fino a 15','setCfg(\'lastTarget\',15)')}${b(S.cfg.lastTarget===25,'Fino a 25','setCfg(\'lastTarget\',25)')}</div>
+    <div class="lbl">Giocare tutti i set</div>
+    <div class="opt">${b(!S.cfg.playAll,'No, finisce al set decisivo','setCfg(\'playAll\',false)')}${b(S.cfg.playAll,'Si, si giocano tutti (under 11)','setCfg(\'playAll\',true)')}</div>
+    <div class="lbl">Limite di battute di fila (under 11)</div>
+    <div class="opt">${b(!S.cfg.maxServe,'Nessun limite','setCfg(\'maxServe\',0)')}${b(S.cfg.maxServe===3,'Massimo 3 punti di fila','setCfg(\'maxServe\',3)')}</div>
+    <p class="note">Con il limite attivo, dopo 3 punti consecutivi sulla propria battuta il servizio passa agli avversari anche se la squadra ha segnato (cambio palla, e gli avversari girano). Se la squadra sbaglia prima, il cambio palla avviene come sempre.</p>
     <div class="lbl">Cambi per set</div>
     <div class="opt">${b(S.cfg.maxSubs===8,'8 (regole 2026)','setCfg(\'maxSubs\',8)')}${b(S.cfg.maxSubs===6,'6 (regole precedenti)','setCfg(\'maxSubs\',6)')}${b(S.cfg.maxSubs===99,'Illimitati','setCfg(\'maxSubs\',99)')}</div>
+    <p class="note">In ogni set serve lo scarto di 2 punti. Gli altri set sono sempre a 25.${started?' Se cambi il formato a partita iniziata, le regole nuove valgono da subito.':''}</p>`;
+  const campo=`
     <div class="lbl">Giocatrici in campo</div>
     <div class="opt">${b(S.cfg.showCourt!==false,'Mostra le sei posizioni','setCfg(\'showCourt\',true)')}${b(S.cfg.showCourt===false,'Nascondi (si gira con tutte)','setCfg(\'showCourt\',false)')}</div>
     <div class="lbl">Giro continuo con panchina (under 11)</div>
@@ -897,14 +1242,34 @@ function openSettings(){
     <p class="note">Con il giro continuo, ogni volta che la squadra di casa conquista la battuta e gira, chi era in posizione 2 esce in fondo alla panchina e la prima della lista entra in posizione 1, in battuta. Non conta come cambio. L'ordine si decide trascinando i nomi in panchina.</p>
     <div class="lbl">Formazione avversaria</div>
     <div class="opt">${b(!S.cfg.oppNames,'Solo numeri (predefinita)',"setCfg('oppNames',false)")}${b(S.cfg.oppNames,'Numeri e nomi',"setCfg('oppNames',true)")}</div>
-    <p class="note">Con "Numeri e nomi" tocchi un dischetto avversario e compili numero e nome delle sei posizioni in una schermata. Con la scelta predefinita scrivi solo il numero nel dischetto.</p>
-    <div class="lbl">Limite di battute di fila (under 11)</div>
-    <div class="opt">${b(!S.cfg.maxServe,'Nessun limite',"setCfg('maxServe',0)")}${b(S.cfg.maxServe===3,'Massimo 3 punti di fila',"setCfg('maxServe',3)")}</div>
-    <p class="note">Con il limite attivo, dopo 3 punti consecutivi sulla propria battuta il servizio passa agli avversari anche se la squadra ha segnato (cambio palla, e gli avversari girano). Se la squadra sbaglia prima, il cambio palla avviene come sempre.</p>
-    <div class="lbl">Giocare tutti i set</div>
-    <div class="opt">${b(!S.cfg.playAll,'No, finisce al set decisivo','setCfg(\'playAll\',false)')}${b(S.cfg.playAll,'Si, si giocano tutti (under 11)','setCfg(\'playAll\',true)')}</div>
-    ${offlineNote()}
-    <p class="note">In ogni set serve lo scarto di 2 punti. Gli altri set sono sempre a 25.${started?' Se cambi il formato a partita iniziata, le regole nuove valgono da subito.':''}</p>
+    <p class="note">Con "Numeri e nomi" tocchi un dischetto avversario e compili numero e nome delle sei posizioni in una schermata. Con la scelta predefinita scrivi solo il numero nel dischetto.</p>`;
+  const avvisi=`
+    <div class="lbl">Set point e match point</div>
+    <div class="opt">${b(S.cfg.alerts!==false,'Mostra',"setCfg('alerts',true)")}${b(S.cfg.alerts===false,'Non mostrare',"setCfg('alerts',false)")}</div>
+    <p class="note">Sotto il punteggio della squadra che con il prossimo punto chiude il set (o la partita) compare un'etichetta rossa.</p>
+    <div class="lbl">Cambio campo nel set decisivo</div>
+    <div class="opt">${b((S.cfg.ccMode||'off')==='off','Spento',"setCfg('ccMode','off')")}${b(S.cfg.ccMode==='ask','Avviso',"setCfg('ccMode','ask')")}${b(S.cfg.ccMode==='auto','Automatico',"setCfg('ccMode','auto')")}</div>
+    <p class="note">Vale solo nell'ultimo set possibile, giocato a 15 punti: quando una squadra arriva a 8, l'app te lo segnala (Avviso) o cambia campo da sola (Automatico). Con Automatico l'annulla non puo' tornare indietro oltre il cambio. Controlla che il regolamento della tua categoria preveda il cambio a 8: se non lo prevede, lascia Spento.</p>`;
+  const funz=`
+    <div class="lbl">Statistiche giocatrici (minutaggio e battute)</div>
+    <div class="opt">${b(S.cfg.pstats!==false,'Accese',"setCfg('pstats',true)")}${b(S.cfg.pstats===false,'Spente',"setCfg('pstats',false)")}</div>
+    <p class="note">Registrano da sole punti giocati, turni di battuta, punti in battuta e serie piu' lunga di ogni giocatrice, senza tocchi in piu'. Si vedono in Squadra, Statistiche giocatrici, e nel PDF.</p>
+    <div class="lbl">Schermo sempre acceso durante l'uso</div>
+    <div class="opt">${b(S.cfg.wake!==false,'Acceso',"setCfg('wake',true)")}${b(S.cfg.wake===false,'Spento',"setCfg('wake',false)")}</div>
+    <p class="note">Evita che l'iPad si blocchi a meta' partita. Dipende dalla versione di iOS: se non funziona, regola il blocco automatico in Impostazioni di iOS.</p>`;
+  const asp=`
+    <div class="lbl">Tema</div>
+    <div class="opt">${b(th==='dark','Scuro',"setTheme('dark');openSettings()")}${b(th==='light','Chiaro',"setTheme('light');openSettings()")}</div>
+    <div class="lbl">Schermo</div>
+    <div class="opt">${b(layoutPref()==='auto','Automatico',"setLayout('auto')")}${b(layoutPref()==='pad','iPad',"setLayout('pad')")}${b(layoutPref()==='phone','iPhone',"setLayout('phone')")}</div>
+    <p class="note">Nome e colori delle squadre sono nel menu Squadra.</p>`;
+  showOv(`<h2>Impostazioni</h2>
+    ${grp('partita','Regole della partita',partita)}
+    ${grp('campo','Campo e rotazione',campo)}
+    ${grp('avvisi','Avvisi di gioco',avvisi)}
+    ${grp('funz','Funzioni',funz)}
+    ${grp('asp','Aspetto',asp)}
+    ${grp('app','Versione e uso senza internet',versionHTML()+offlineNote())}
     <button class="grey" onclick="closeOv()">Chiudi</button>`);
 }
 const SWATCHES=[['Bianco','#f8fafc'],['Giallo','#facc15'],['Arancione','#fb923c'],['Rosso','#ef4444'],['Rosa','#f472b6'],['Viola','#a855f7'],['Blu','#2563eb'],['Azzurro','#22d3ee'],['Verde','#22c55e'],['Grigio','#9ca3af'],['Nero','#111827']];
@@ -914,9 +1279,9 @@ function colorRow(t){
   return `<div class="lbl">Colore maglia: ${esc(S.names[t])}</div>
     <div class="opt">${sw}<input type="color" value="${teamColor(t)}" onchange="setColor(${t},this.value)"><button class="${cur?'grey':''}" onclick="setColor(${t},null)">Predefinito</button></div>`;
 }
-function setColor(t,c){ S.colors[t]=c; save(); render(); openSettings() }
+function setColor(t,c){ S.colors[t]=c; save(); render(); openColors() }
 function setCfg(k,v){
-  S.cfg[k]=v; save();
+  S.cfg[k]=v; save(); if(k==='wake') wakeOn();
   // se cambiando formato i set vinti bastano gia' per chiudere la partita, la chiudiamo
   if(!S.over && matchDecided()){ finishMatch(); return }
   // se il set in corso ha gia' raggiunto il nuovo obiettivo con 2 di scarto, lo chiudiamo
@@ -1030,7 +1395,7 @@ function modesHTML(){
 function liveModel(){
   const sets=S.log.slice();
   if(!S.over && S.pl.length) sets.push({n:S.setNum,a:S.pts[0],b:S.pts[1],pl:S.pl,sv0:S.sv0,ts:S.ts||null,te:null,live:true,lu:S.lu0||null,bq:S.bq0||[],sb:subsOut(S.subs[S.home])});
-  return {names:S.names,cols:S.colors,sets:sets,won:S.sets,date:S.date,squad:pool().map(pstr),rt:S.home,rot:!!S.cfg.autoRot};
+  return {names:S.names,cols:S.colors,sets:sets,won:S.sets,date:S.date,squad:pool().map(pstr),rt:S.home,rot:!!S.cfg.autoRot,comp:S.comp||'',round:S.round||'',venue:S.venue||'',pst:(S.cfg.pstats?S.pst:null),pn:pnMap(S.pst)};
 }
 function matchModel(m){
   const sets=m.log.map(x=>{
@@ -1038,7 +1403,7 @@ function matchModel(m){
     const pl=(x.pts||[]).map(c=>{ const t=(c>>1)&1; if(t===0) a++; else b++; return {t:t,a:a,b:b,side:!!(c&1),fc:!!(c&4)} });
     return {n:x.n,a:x.h,b:x.a,pl:pl,sv0:(x.sv===undefined?null:x.sv),ts:x.ts||null,te:x.te||null,lu:x.lu||null,bq:x.bq||[],sb:x.sb||[]};
   });
-  return {names:[m.home,m.away],cols:m.col||[null,null],sets:sets,won:[m.setsHome,m.setsAway],date:m.date,squad:m.squad||[],rt:0,rot:!!m.rot};
+  return {names:[m.home,m.away],cols:m.col||[null,null],sets:sets,won:[m.setsHome,m.setsAway],date:m.date,squad:m.squad||[],rt:0,rot:!!m.rot,comp:m.comp||'',round:m.round||'',venue:m.venue||'',pst:m.pst||null,pn:m.pn||{}};
 }
 function mcol(M,t){
   const th=document.documentElement.getAttribute('data-theme')==='light'?'light':'dark';
@@ -1065,7 +1430,7 @@ function headerHTML(M){
   const tl=timeLine(M);
   const dt=d.toLocaleDateString('it-IT')+(tl?' | '+tl:' '+d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}));
   const nm=t=>`<span class="mhn" style="border-color:${RMODE==='bw'?'#111':mcol(M,t)}">${esc(M.names[t])}</span>`;
-  return `<div class="mh"><div class="note">${dt}</div><div class="mht">${nm(0)}${sbox(M.won[0],tc(M,0),26,44)}<b>-</b>${sbox(M.won[1],tc(M,1),26,44)}${nm(1)}</div></div>`;
+  return `<div class="mh"><div class="note">${metaLine(M)?esc(metaLine(M))+' | ':''}${dt}</div><div class="mht">${nm(0)}${sbox(M.won[0],tc(M,0),26,44)}<b>-</b>${sbox(M.won[1],tc(M,1),26,44)}${nm(1)}</div></div>`;
 }
 /* Cronologia di ogni set: una riga per squadra (col nome), un quadratino per ogni punto col suo numero progressivo,
    in ordine di gioco da sinistra a destra. Il bordo marcato e' il cambio palla. */
@@ -1146,17 +1511,24 @@ function openHistory(){
   else body=backupHTML();
   showOv(`<h2>Storico</h2>${tabs}${body}<button class="grey" onclick="closeOv()">Chiudi</button>`);
 }
+let HFILTER='';
 function statsHTML(){
   if(!HIST.length) return '<p>Nessuna partita nello storico. Le partite vengono salvate quando finiscono.</p>';
+  const comps=Array.from(new Set(HIST.map(m=>m.comp||''))).filter(Boolean);
+  if(HFILTER && !comps.includes(HFILTER)) HFILTER='';
+  const flt=comps.length?`<div class="opt"><button class="${!HFILTER?'':'grey'}" onclick="HFILTER='';openHistory()">Tutte</button>${comps.map(c=>`<button class="${HFILTER===c?'':'grey'}" data-c="${esc(c)}" onclick="HFILTER=this.dataset.c;openHistory()">${esc(c)}</button>`).join('')}</div>`:'';
+  const vflt=HIST.some(m=>m.venue)?`<div class="opt"><button class="${!VFILTER?'':'grey'}" onclick="VFILTER='';openHistory()">Casa e fuori</button><button class="${VFILTER==='casa'?'':'grey'}" onclick="VFILTER='casa';openHistory()">Solo in casa</button><button class="${VFILTER==='fuori'?'':'grey'}" onclick="VFILTER='fuori';openHistory()">Solo fuori casa</button></div>`:'';
+  const HH=HIST.filter(m=>(!HFILTER||m.comp===HFILTER)&&(!VFILTER||m.venue===VFILTER));
+  if(!HH.length) return flt+vflt+'<p>Nessuna partita con questo filtro.</p>';
   let w=0,l=0,sw=0,sl=0,pf=0,ps=0;
-  HIST.forEach(m=>{
+  HH.forEach(m=>{
     if(m.setsHome>m.setsAway) w++; else l++;
     sw+=m.setsHome; sl+=m.setsAway;
     m.log.forEach(x=>{ pf+=x.h; ps+=x.a });
   });
-  const tot=HIST.length, pct=Math.round(w/tot*100);
+  const tot=HH.length, pct=Math.round(w/tot*100);
   const box=(v,t)=>`<div><b>${v}</b><span>${t}</span></div>`;
-  return `<p class="note">Dal punto di vista della squadra di casa, su ${tot} partite.</p><div class="stat">
+  return `${flt}${vflt}<p class="note">Dal punto di vista della nostra squadra, su ${tot} partite.</p><div class="stat">
     ${box(w,'Vittorie')}${box(l,'Sconfitte')}${box(pct+'%','% vittorie')}
     ${box(sw,'Set vinti')}${box(sl,'Set persi')}${box(sw-sl,'Differenza set')}
     ${box(pf,'Punti fatti')}${box(ps,'Punti subiti')}${box(pf-ps,'Differenza punti')}</div>`;
@@ -1167,7 +1539,7 @@ function listHTML(){
     const d=new Date(m.date).toLocaleDateString('it-IT');
     const det=m.log.map(x=>x.h+'-'+x.a).join(', ');
     const won=m.setsHome>m.setsAway;
-    return `<tr><td>${d}</td><td>${esc(m.home)} - ${esc(m.away)}<br><small class="note">${det}</small></td>
+    return `<tr><td>${d}</td><td>${metaLine(m)?'<small class="note">'+esc(metaLine(m))+'</small><br>':''}${esc(m.home)} - ${esc(m.away)}<br><small class="note">${det}</small></td>
       <td style="color:${won?'var(--ok)':'var(--bad)'}"><b>${m.setsHome}-${m.setsAway}</b></td>
       <td style="white-space:nowrap"><button class="sm" onclick="openMatch(${i})">Analizza</button><button class="red sm" onclick="delMatch(${i})">${DELARM===i?'Conferma?':'X'}</button></td></tr>`;
   }).join('');
@@ -1211,6 +1583,7 @@ function allStore(){
 function backupHTML(){
   return `<p class="note">I dati sono salvati nella memoria di Safari. Se cancelli i dati del sito li perdi: fai ogni tanto un backup.</p>
     <p class="note">Il backup contiene <b>tutto</b>: storico delle partite (${HIST.length}), rosa (${ROSTER.length}), formazioni salvate (${FORMS.length}), partita in corso, convocate, colori e impostazioni.</p>
+    ${bkStatusHTML()}
     <button onclick="exportBackup()">Esporta backup</button>
     <button onclick="document.getElementById('imp').click()">Importa backup</button>
     <input type="file" id="imp" accept=".json,application/json" style="display:none" onchange="importBackup(this)">
@@ -1222,10 +1595,11 @@ async function exportBackup(){
   const data=JSON.stringify({app:'pallavolo',v:4,date:new Date().toISOString(),store:allStore()},null,1);
   const file=new File([data],'pallavolo-backup-'+new Date().toISOString().slice(0,10)+'.json',{type:'application/json'});
   if(navigator.canShare && navigator.canShare({files:[file]})){
-    try{ await navigator.share({files:[file],title:'Backup pallavolo'}); return }catch(e){ if(e.name==='AbortError') return }
+    try{ await navigator.share({files:[file],title:'Backup pallavolo'}); markBackup(); return }catch(e){ if(e.name==='AbortError') return }
   }
-  window.open(URL.createObjectURL(file),'_blank');
+  window.open(URL.createObjectURL(file),'_blank'); markBackup();
 }
+function markBackup(){ try{ localStorage.setItem(BKKEY,new Date().toISOString()) }catch(e){} updBkWarn(); if(document.getElementById('ov').style.display!=='none') try{ openHistory() }catch(e){} }
 let PENDING=null;
 function importBackup(inp){
   const f=inp.files[0]; if(!f) return;
@@ -1347,6 +1721,8 @@ function matchPDF(M){
   const nm=M.names, T=timesOf(M), d=new Date(M.date);
 
   text(MG,y-16,17,'Riepilogo partita di pallavolo',true); y-=26;
+  if(M.comp||M.round) para('Competizione: '+compText(M.comp,M.round),10,null,2,true);
+  if(M.venue) para('Sede: '+venueText(M.venue),10,null,2,true);
   para('Data: '+d.toLocaleDateString('it-IT'),10,null,2);
   if(T.st) para('Ora di inizio: '+hm(T.st)+'     Ora di fine: '+(T.en?hm(T.en):'partita in corso')+(T.dur?'     Durata: '+T.dur+' min':''),10,null,2);
   else para('Ora di creazione partita: '+hm(M.date)+'. Orari di inizio e fine non registrati per questa partita.',10,null,2);
@@ -1407,6 +1783,20 @@ function matchPDF(M){
     y-=4;
     para('Cambi palla totali: '+tot+'. Vantaggio massimo: '+nm[0]+' +'+st[0].lead+', '+nm[1]+' +'+st[1].lead+'.',8.5,GR,1);
     para('Punti dopo cambio palla = segnati mentre si riceve (la squadra prende la battuta). Serie = punti consecutivi.',8.5,GR,10);
+    if(M.pst && Object.keys(M.pst).length){
+      need(70);
+      text(MG,y-11,11,'Giocatrici',true); y-=16;
+      const ptot=M.sets.reduce((n,x)=>n+x.a+x.b,0)||1;
+      const pc=[[MG,150],[MG+150,40],[MG+190,70],[MG+260,60],[MG+320,70],[MG+390,70],[MG+460,55]];
+      cells(pc,['Giocatrice','Set','Punti giocati','Presenza','Turni battuta','Punti in battuta','Serie max'],8,()=>true,9);
+      y-=13; hline(y);
+      Object.keys(M.pst).map(id=>({n:pName(id,M.pn),p:M.pst[id]})).sort((a,b)=>(parseInt(a.n)||999)-(parseInt(b.n)||999)).forEach(r=>{
+        need(18);
+        cells(pc,[r.n,String(r.p.sets),String(r.p.pp),Math.round(r.p.pp/ptot*100)+'%',String(r.p.st),String(r.p.ps),String(r.p.best)],9,i=>i===0,11);
+        y-=15; hline(y);
+      });
+      para('Presenza = punti giocati sul totale dei punti della partita. Turni = volte che ha preso la battuta. Punti in battuta = punti fatti mentre batteva.',8.5,GR,10);
+    }
 
     // cronologia dei punti
     need(70);
@@ -1479,7 +1869,7 @@ function sharePDF(){ const M=liveModel(); return sharePDFModel(M,pdfName(M)) }
 function sharePDFof(i){ if(!HIST[i]) return; const M=matchModel(HIST[i]); return sharePDFModel(M,pdfName(M)) }
 /* Alternativa che funziona sempre: il riepilogo in testo, mandato a WhatsApp. */
 function summaryText(){
-  const L=['Pallavolo: '+S.names[0]+' - '+S.names[1], new Date(S.date).toLocaleDateString('it-IT')];
+  const L=['Pallavolo: '+S.names[0]+' - '+S.names[1], (metaLine(S)?metaLine(S)+' | ':'')+new Date(S.date).toLocaleDateString('it-IT')];
   S.log.forEach(x=>L.push('Set '+x.n+': '+x.a+' - '+x.b+(x.pl&&x.pl.length?' (cambi palla: '+x.pl.filter(p=>p.side||p.fc).length+')':'')));
   L.push('Set vinti: '+S.sets[0]+' - '+S.sets[1]);
   return L.join('\n');
@@ -1521,7 +1911,7 @@ function makeIcon(){
 }
 try{ makeIcon() }catch(e){}
 
-load(); render();
+load(); render(); askPersist(); wakeOn(); setTimeout(autoCheckUpdate,4000); document.querySelectorAll('.menu .dd').forEach((d,i,a)=>{ if(i===a.length-1) d.classList.add('r') });
 
 /* Registra il file sw.js per l'uso offline (solo da indirizzo web, non da file locale). */
 try{
