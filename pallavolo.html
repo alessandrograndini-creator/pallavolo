@@ -818,7 +818,7 @@ function setPlayer(t,i,v){
 
 /* ---------- Versione e aggiornamenti ----------
    APP_VERSION va cambiata a ogni nuova versione del file: serve a capire quale versione sta girando. */
-const APP_VERSION='2026.11.03-a';
+const APP_VERSION='2026.11.03-b';
 let UPDAVAIL=false;
 function swReady(){ return !!(('serviceWorker' in navigator) && navigator.serviceWorker.controller && /^https?:$/.test(location.protocol)) }
 async function onlineVersion(){
@@ -1021,7 +1021,7 @@ function openPStats(){
   if(PSTAB==='match'){
     const total=S.log.reduce((n,x)=>n+x.a+x.b,0)+S.pts[0]+S.pts[1];
     const ids=new Set(pool().map(p=>p.id)); Object.keys(S.pst||{}).forEach(id=>ids.add(id));
-    rows=Array.from(ids).map(id=>{ const p=S.pst[id]||blank(); return {id:id,name:pName(id),m:1,mf:(p.pf!==undefined?1:0),tot:total,sets:p.sets,pp:p.pp,pf:p.pf,ppf:p.pp,st:p.st,ps:p.ps,t3:p.t3,t0:p.t0} });
+    rows=Array.from(ids).map(id=>{ const p=S.pst[id]||blank(); return {id:id,name:pName(id),m:1,mf:(p.pf!==undefined?1:0),tot:total,sets:p.sets,pp:p.pp,pf:p.pf,ppf:p.pp,st:p.st,ps:p.ps,t3:p.t3,t0:p.t0,best:(p.best||0)} });
     sets=S.log.map(x=>({lu:x.lu,pp:x.ppl,tot:x.a+x.b}));
   } else {
     const comps=Array.from(new Set(HIST.filter(m=>m.pst).map(m=>m.comp||''))).filter(Boolean);
@@ -1031,8 +1031,9 @@ function openPStats(){
     ms.forEach(m=>{
       const tot=m.log.reduce((n,x)=>n+x.h+x.a,0);
       Object.keys(m.pst).forEach(id=>{
-        const p=m.pst[id], a=agg[id]||(agg[id]={id:id,name:pName(id,m.pn),m:0,mf:0,tot:0,sets:0,pp:0,pf:null,ppf:0,st:0,ps:0,t3:null,t0:null});
+        const p=m.pst[id], a=agg[id]||(agg[id]={id:id,name:pName(id,m.pn),m:0,mf:0,tot:0,sets:0,pp:0,pf:null,ppf:0,st:0,ps:0,t3:null,t0:null,best:0});
         a.m++; a.tot+=tot; a.sets+=p.sets; a.pp+=p.pp; a.st+=p.st; a.ps+=p.ps;
+        if((p.best||0)>a.best) a.best=p.best;
         if(p.pf!==undefined){ a.pf=(a.pf||0)+p.pf; a.ppf+=p.pp; a.mf++ }
         if(p.t3!==undefined){ a.t3=(a.t3||0)+p.t3; a.t0=(a.t0||0)+(p.t0||0) }
       });
@@ -1041,17 +1042,17 @@ function openPStats(){
     rows=Object.values(agg);
   }
   rows.sort((a,b)=>(parseInt(a.name)||999)-(parseInt(b.name)||999));
-  const hist=PSTAB!=='match', dash=v=>(v===null||v===undefined)?'-':v;
+  const showBest=!S.cfg.maxServe, hist=PSTAB!=='match', dash=v=>(v===null||v===undefined)?'-':v;
   const perf=r=>{
     if(r.pf===null||r.pf===undefined||!r.ppf) return '-';
     if(r.mf<MINM) return `<span style="color:var(--muted)">pochi dati</span>`;
     const d=(2*r.pf-r.ppf)/r.ppf*25; return (d>=0?'+':'')+d.toFixed(1);
   };
-  const body=rows.length?`<div class="anwrap"><table class="antab"><tr><th style="text-align:left">Giocatrice</th>${hist?'<th>Partite</th>':''}<th>Set</th><th>Punti giocati</th><th>Presenza</th><th>Turni batt.</th><th>Punti batt.</th><th>Turni da 3</th><th>Turni a 0</th><th>Rendimento</th></tr>
-    ${rows.map(r=>{ const pc=r.tot?Math.round(r.pp/r.tot*100):0; return `<tr><td style="text-align:left"><b>${esc(r.name)}</b></td>${hist?`<td>${r.m}</td>`:''}<td>${r.sets}</td><td>${r.pp}</td><td style="white-space:nowrap"><span class="pbar"><i style="width:${pc}%"></i></span>${pc}%</td><td>${r.st}</td><td>${r.ps}</td><td>${dash(r.t3)}</td><td>${dash(r.t0)}</td><td>${perf(r)}</td></tr>` }).join('')}</table></div>`
+  const body=rows.length?`<div class="anwrap"><table class="antab"><tr><th style="text-align:left">Giocatrice</th>${hist?'<th>Partite</th>':''}<th>Set</th><th>Punti giocati</th><th>Presenza</th><th>Turni batt.</th><th>Punti batt.</th><th>Turni da 3</th><th>Turni a 0</th>${showBest?'<th>Serie max</th>':''}<th>Rendimento</th></tr>
+    ${rows.map(r=>{ const pc=r.tot?Math.round(r.pp/r.tot*100):0; return `<tr><td style="text-align:left"><b>${esc(r.name)}</b></td>${hist?`<td>${r.m}</td>`:''}<td>${r.sets}</td><td>${r.pp}</td><td style="white-space:nowrap"><span class="pbar"><i style="width:${pc}%"></i></span>${pc}%</td><td>${r.st}</td><td>${r.ps}</td><td>${dash(r.t3)}</td><td>${dash(r.t0)}</td>${showBest?`<td>${r.best||0}</td>`:''}<td>${perf(r)}</td></tr>` }).join('')}</table></div>`
     :`<p class="note">${hist?'Nessun dato: le statistiche si registrano dalle partite giocate dopo questo aggiornamento, quando la funzione e\' accesa.':'Ancora nessun punto in questa partita.'}</p>`;
   showOv(`<h2>Statistiche giocatrici</h2><div class="tabs">${t('match','Partita in corso')}${t('hist','Storico')}</div>${extra}${body}
-    <p class="note"><b>Presenza</b>: punti giocati sul totale dei punti. <b>Turni batt.</b>: volte che ha preso la battuta. <b>Punti batt.</b>: punti fatti mentre batteva. <b>Turni da 3</b>: turni chiusi con almeno 3 punti di fila. <b>Turni a 0</b>: ha perso la battuta al primo servizio. <b>Rendimento</b>: punti fatti meno subiti dalla squadra mentre lei giocava, ogni 25 punti. Compare solo dopo ${MINM} partite: prima e' piu' casualita' che bravura, perche' dipende da quando entra e da chi e' in campo con lei. Usalo come indizio, mai per escludere una giocatrice.</p>
+    <p class="note"><b>Presenza</b>: punti giocati sul totale dei punti. <b>Turni batt.</b>: volte che ha preso la battuta. <b>Punti batt.</b>: punti fatti mentre batteva. <b>Turni da 3</b>: turni chiusi con almeno 3 punti di fila. <b>Turni a 0</b>: ha perso la battuta al primo servizio. ${showBest?'<b>Serie max</b>: punti di fila piu\' lunghi in un solo turno (nelle partite con il limite a 3 non supera mai 3). ':''}<b>Rendimento</b>: punti fatti meno subiti dalla squadra mentre lei giocava, ogni 25 punti. Compare solo dopo ${MINM} partite: prima e' piu' casualita' che bravura, perche' dipende da quando entra e da chi e' in campo con lei. Usalo come indizio, mai per escludere una giocatrice.</p>
     ${startPosHTML(sets)}
     <button class="grey" onclick="closeOv()">Chiudi</button>`);
 }
