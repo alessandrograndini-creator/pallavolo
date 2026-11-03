@@ -239,6 +239,19 @@ details.grp>.gin{padding:0 14px 12px}
 .lk-t{font-size:clamp(20px,4vw,34px);font-weight:800}
 .lk-b{position:relative;overflow:hidden;background:#18203a;color:#fff;border:2px solid #4a5a8f;border-radius:18px;padding:20px 30px;font-size:clamp(17px,3vw,24px);font-weight:800;min-width:min(80vw,380px)}
 .lk-p{position:absolute;left:0;bottom:0;height:7px;width:0;background:var(--accent,#ff9a3c)}
+
+.box input[type=date],.box input[type=time],.box input[type=number],.box select{font-size:17px;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--text)}
+.fxc{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:8px 0;background:var(--card2)}
+.fxh{display:flex;justify-content:space-between;gap:8px;font-size:14px;color:var(--muted);flex-wrap:wrap}
+.fxm{font-size:18px;font-weight:800;margin:4px 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.vp{font-size:12px;font-weight:800;padding:2px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.vp.f{border-color:var(--accent);color:var(--accent)}
+.fxr{font-size:16px;font-weight:800;margin:2px 0 6px}
+.fxr.won{color:var(--ok)}.fxr.lost{color:var(--bad)}
+.fxr small{font-weight:600;color:var(--muted)}
+.fxf label{display:block;margin-top:10px;font-weight:700;font-size:14px;color:var(--muted)}
+.fxf input,.fxf select{width:100%;box-sizing:border-box}
+.fxf .two{display:flex;gap:8px}.fxf .two>div{flex:1}
 </style>
 </head>
 <body>
@@ -252,6 +265,10 @@ details.grp>.gin{padding:0 14px 12px}
       <button onclick="closeDD();openBoard()">Tabellone</button>
       <button onclick="closeDD();openSummary()">Riepilogo</button>
       <button onclick="closeDD();newMatch()">Nuova partita</button></div></div>
+    <div class="dd"><button class="ddb" onclick="toggleDD(this)">Campionato</button><div class="ddp">
+      <button onclick="closeDD();openCal()">Calendario partite</button>
+      <button onclick="closeDD();openFxForm()">Aggiungi partita</button>
+      <button onclick="closeDD();openCalSummary()">Risultati e classifica</button></div></div>
     <div class="dd"><button class="ddb" onclick="toggleDD(this)">Squadra</button><div class="ddp">
       <button onclick="closeDD();openNames()">Nome squadre</button>
       <button onclick="closeDD();openColors()">Colori maglia</button>
@@ -307,7 +324,7 @@ function fresh(names,cfg,colors){
     subs:[[],[]], subLog:[], tos:[0,0], pl:[], sv0:null,
     pts:[0,0], sets:[0,0], history:[], log:[], setNum:1, server:0,
     lineup:[ ['','','','','',''], ['1','2','3','4','5','6'] ],
-    pst:{}, pset:{}, psp:{}, run:0, cc:false, comp:((typeof S!=='undefined'&&S&&S.comp)||''), round:((typeof S!=='undefined'&&S&&S.round)||''), venue:((typeof S!=='undefined'&&S&&S.venue)||''),
+    fixId:'', pst:{}, pset:{}, psp:{}, run:0, cc:false, comp:((typeof S!=='undefined'&&S&&S.comp)||''), round:((typeof S!=='undefined'&&S&&S.round)||''), venue:((typeof S!=='undefined'&&S&&S.venue)||''),
     over:false, saved:false, date:new Date().toISOString()
   };
 }
@@ -344,6 +361,9 @@ function load(){
   if(S.venue===undefined) S.venue='';
   if(S.round===undefined) S.round='';
   try{ const c=JSON.parse(localStorage.getItem(CKEY)); if(Array.isArray(c)) COMPS=c }catch(e){}
+  try{ FIX=JSON.parse(localStorage.getItem(FXKEY))||[] }catch(e){ FIX=[] }
+  try{ CLMODE=localStorage.getItem(CLKEY)||'none' }catch(e){ CLMODE='none' }
+  if(S.fixId===undefined) S.fixId='';
   if(!Array.isArray(S.bq)) S.bq=[];
   setTheme(localStorage.getItem(TKEY)||'dark');
   applyLayout();
@@ -485,6 +505,7 @@ function finishMatch(){
         pts:(x.pl||[]).map(p=>((p.t===h?0:1)*2+(p.side?1:0)+(p.fc?4:0)))}))
     });
     saveHist();
+    if(S.fixId){ const fx=FIX.find(x=>x.id===S.fixId); if(fx){ fx.hist=S.date; fx.res=null; fx.comp=fx.comp||S.comp; saveFix() } }
   }
   save(); render(); openSummary();
 }
@@ -818,7 +839,7 @@ function setPlayer(t,i,v){
 
 /* ---------- Versione e aggiornamenti ----------
    APP_VERSION va cambiata a ogni nuova versione del file: serve a capire quale versione sta girando. */
-const APP_VERSION='2026.11.03-b';
+const APP_VERSION='2026.11.03-c';
 let UPDAVAIL=false;
 function swReady(){ return !!(('serviceWorker' in navigator) && navigator.serviceWorker.controller && /^https?:$/.test(location.protocol)) }
 async function onlineVersion(){
@@ -898,6 +919,164 @@ function checkCourtChange(){
     <button onclick="doCC()">Cambia campo ora</button><button class="grey" onclick="closeOv()">Non ora</button>`);
 }
 function doCC(){ swapSides(); closeOv() }
+
+
+/* ---------- Campionato: calendario, risultati, riepilogo ----------
+   Ogni partita del calendario ha: competizione, giornata, data e ora, avversario, sede.
+   Se e' gia' stata giocata ha un risultato: o inserito a mano (solo set e, se vuoi, i punteggi dei set),
+   o collegato a una partita giocata con l'app (lo storico), che ne fornisce tutti i dettagli. */
+const FXKEY='pallavolo_calendario_v1', CLKEY='pallavolo_classifica_v1';
+let FIX=[], FXCOMP='', FXDEL=-1, FXSTART=null, CLMODE='none';
+function saveFix(){ try{ localStorage.setItem(FXKEY,JSON.stringify(FIX)) }catch(e){ toast('Salvataggio calendario non riuscito.',true) } }
+function fxId(){ return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,5) }
+function fxWhen(f){ return (f.date||'9999-12-31')+' '+(f.time||'00:00') }
+function fxDateText(f){
+  if(!f.date) return 'Data da definire';
+  const d=new Date(f.date+'T'+(f.time||'00:00'));
+  if(isNaN(d)) return f.date;
+  return d.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short',year:'numeric'})+(f.time?' ore '+f.time:'');
+}
+/* Risultato di una partita del calendario: dallo storico se collegata, altrimenti quello scritto a mano. */
+function fxResult(f){
+  if(f.hist){ const m=HIST.find(x=>x.date===f.hist); if(m) return {sf:m.setsHome,sa:m.setsAway,sets:m.log.map(x=>[x.h,x.a]),hist:m} }
+  if(f.res && f.res.sf!=null) return {sf:f.res.sf,sa:f.res.sa,sets:f.res.sets||[],hist:null};
+  return null;
+}
+function fxPts(r){ // punti in classifica secondo la regola scelta
+  if(CLMODE==='set') return r.sf;
+  if(CLMODE==='fipav'){ if(r.sf>r.sa) return (r.sa<=1)?3:2; return (r.sf>=2)?1:0 }
+  return null;
+}
+function setCLMode(v){ CLMODE=v; try{ localStorage.setItem(CLKEY,v) }catch(e){} openCalSummary() }
+function fxChips(extra){
+  const comps=Array.from(new Set(FIX.map(f=>f.comp||''))).filter(Boolean);
+  if(FXCOMP && !comps.includes(FXCOMP)) FXCOMP='';
+  if(comps.length<2) return '';
+  return `<div class="opt"><button class="${!FXCOMP?'':'grey'}" onclick="FXCOMP='';${extra}">Tutte</button>${comps.map(c=>`<button class="${FXCOMP===c?'':'grey'}" data-c="${esc(c)}" onclick="FXCOMP=this.dataset.c;${extra}">${esc(c)}</button>`).join('')}</div>`;
+}
+function vpill(v){ return v?`<span class="vp ${v==='fuori'?'f':''}">${v==='fuori'?'Fuori casa':'In casa'}</span>`:'' }
+function openCal(){
+  FXSTART=null;
+  const list=FIX.filter(f=>!FXCOMP||f.comp===FXCOMP);
+  const our=esc(S.names[S.home]);
+  const card=f=>{
+    const r=fxResult(f), won=r&&r.sf>r.sa;
+    const sets=r&&r.sets.length?' <small>('+r.sets.map(s=>s[0]+'-'+s[1]).join(', ')+')</small>':'';
+    const btns=r
+      ?`<button class="sm" onclick="openFxForm('${f.id}')">Modifica</button>${r.hist?`<button class="sm grey" onclick="openMatch(HIST.indexOf(fxResult(FIX.find(x=>x.id==='${f.id}')).hist))">Analizza</button>`:''}`
+      :`<button class="sm" onclick="askStartFix('${f.id}')">Gioca</button><button class="sm grey" onclick="openFxForm('${f.id}',true)">Risultato</button><button class="sm grey" onclick="openFxForm('${f.id}')">Modifica</button>`;
+    return `<div class="fxc"><div class="fxh"><span><b>${esc(f.round||'-')}</b>${f.comp?' - '+esc(f.comp):''}</span><span>${esc(fxDateText(f))}</span></div>
+      <div class="fxm">${our} - ${esc(f.opp)} ${vpill(f.venue)}</div>
+      ${r?`<div class="fxr ${won?'won':'lost'}">${r.sf} - ${r.sa}${sets}</div>`:''}
+      <div class="frow">${btns}<button class="red sm" onclick="delFx('${f.id}')">${FXDEL===f.id?'Confermi?':'Elimina'}</button></div></div>`;
+  };
+  const prog=list.filter(f=>!fxResult(f)).sort((a,b)=>fxWhen(a).localeCompare(fxWhen(b)));
+  const done=list.filter(f=>fxResult(f)).sort((a,b)=>fxWhen(a).localeCompare(fxWhen(b)));
+  showOv(`<h2>Calendario partite</h2>
+    ${fxChips('openCal()')}
+    <button onclick="openFxForm()">Aggiungi partita</button><button class="grey" onclick="openCalSummary()">Risultati e classifica</button>
+    <div class="lbl">Da giocare (${prog.length})</div>${prog.map(card).join('')||'<p class="note">Nessuna partita in programma.</p>'}
+    <div class="lbl">Giocate (${done.length})</div>${done.map(card).join('')||'<p class="note">Nessun risultato inserito.</p>'}
+    <button class="grey" onclick="FXDEL=null;closeOv()">Chiudi</button>`);
+}
+function delFx(id){
+  if(FXDEL!==id){ FXDEL=id; openCal(); return }
+  FXDEL=null; FIX=FIX.filter(f=>f.id!==id); saveFix(); openCal();
+}
+function openFxForm(id,focusRes){
+  const f=id?FIX.find(x=>x.id===id):null, v=f||{comp:S.comp||'',round:'',date:'',time:'',opp:'',venue:'',hist:'',res:null};
+  const r=v.res||{}, setsTxt=(r.sets||[]).map(s=>s[0]+'-'+s[1]).join(' ');
+  const hOpts=['<option value="">(nessuna, risultato scritto a mano)</option>'].concat(HIST.map(m=>{
+    const taken=FIX.some(x=>x.id!==(f&&f.id)&&x.hist===m.date);
+    return `<option value="${esc(m.date)}" ${v.hist===m.date?'selected':''} ${taken?'disabled':''}>${esc(new Date(m.date).toLocaleDateString('it-IT'))}: ${esc(m.home)} - ${esc(m.away)} ${m.setsHome}-${m.setsAway}${taken?' (gia\' collegata)':''}</option>`;
+  })).join('');
+  showOv(`<h2>${f?'Modifica partita':'Nuova partita in calendario'}</h2><div class="fxf">
+    <label>Competizione</label><input type="text" id="fxc" list="fxcl" value="${esc(v.comp||'')}" placeholder="es. Campionato"><datalist id="fxcl">${COMPS.map(c=>`<option value="${esc(c)}">`).join('')}</datalist>
+    <label>Giornata</label><input type="text" id="fxr" value="${esc(v.round||'')}" placeholder="es. 3a giornata">
+    <div class="two"><div><label>Data</label><input type="date" id="fxd" value="${esc(v.date||'')}"></div><div><label>Ora</label><input type="time" id="fxt" value="${esc(v.time||'')}"></div></div>
+    <label>Avversario</label><input type="text" id="fxo" value="${esc(v.opp||'')}" placeholder="Nome della squadra avversaria">
+    <label>Dove si gioca</label><select id="fxv"><option value="" ${!v.venue?'selected':''}>Non indicato</option><option value="casa" ${v.venue==='casa'?'selected':''}>In casa</option><option value="fuori" ${v.venue==='fuori'?'selected':''}>Fuori casa</option></select>
+    <div class="lbl" style="margin-top:14px">Risultato (se la partita e' gia' stata giocata)</div>
+    <div class="two"><div><label>Set nostri</label><input type="number" id="fxsf" min="0" max="5" inputmode="numeric" value="${r.sf!=null?r.sf:''}"></div><div><label>Set avversari</label><input type="number" id="fxsa" min="0" max="5" inputmode="numeric" value="${r.sa!=null?r.sa:''}"></div></div>
+    <label>Punteggi dei set (facoltativo)</label><input type="text" id="fxs" value="${esc(setsTxt)}" placeholder="es. 25-17 25-11 25-4">
+    <label>Oppure collega una partita giocata con l'app</label><select id="fxh">${hOpts}</select>
+    <p class="note">Se colleghi una partita dello storico, il risultato e tutti i dettagli (cronologia, statistiche) vengono da li', e la partita dello storico prende competizione, giornata e sede di questa. Lascia vuoto il risultato per una partita ancora da giocare.</p></div>
+    <button onclick="saveFx(${f?`'${f.id}'`:'null'})">Salva</button><button class="grey" onclick="openCal()">Annulla</button>`);
+  if(focusRes) setTimeout(()=>{ const e=document.getElementById('fxsf'); if(e) try{ e.focus() }catch(_){} },60);
+}
+function saveFx(id){
+  const g=k=>document.getElementById(k).value.trim();
+  const opp=g('fxo'); if(!opp){ toast('Scrivi il nome dell\'avversario.',true); return }
+  const o={comp:g('fxc'),round:g('fxr'),date:g('fxd'),time:g('fxt'),opp:opp,venue:g('fxv'),hist:g('fxh'),res:null};
+  if(!o.hist){
+    const a=g('fxsf'), b=g('fxsa'), txt=g('fxs');
+    let sets=[];
+    if(txt){
+      for(const tk of txt.split(/[\s,;]+/).filter(Boolean)){
+        const m=/^(\d{1,2})\s*[-:]\s*(\d{1,2})$/.exec(tk);
+        if(!m){ toast('Punteggio set non valido: "'+tk+'". Scrivi cosi: 25-17 25-11.',true); return }
+        sets.push([+m[1],+m[2]]);
+      }
+    }
+    let sf=a===''?null:+a, sa=b===''?null:+b;
+    if(sets.length){
+      const w=sets.filter(s=>s[0]>s[1]).length, l=sets.filter(s=>s[0]<s[1]).length;
+      if(sf===null&&sa===null){ sf=w; sa=l }
+      else if(sf!==w||sa!==l){ toast('I punteggi dei set danno '+w+'-'+l+', ma hai scritto '+sf+'-'+sa+' come set.',true); return }
+    }
+    if((sf===null)!==(sa===null)){ toast('Scrivi i set di entrambe le squadre, oppure lascia vuoto.',true); return }
+    if(sf!==null){
+      if(sf===sa){ toast('I set non possono finire in parita.',true); return }
+      o.res={sf:sf,sa:sa,sets:sets};
+    }
+  } else {
+    // la partita dello storico prende i dati del calendario
+    const m=HIST.find(x=>x.date===o.hist);
+    if(m){ m.comp=o.comp; m.round=o.round; m.venue=o.venue; saveHist() }
+  }
+  if(id){ const i=FIX.findIndex(x=>x.id===id); if(i>=0) FIX[i]=Object.assign({id:id},o) }
+  else FIX.push(Object.assign({id:fxId()},o));
+  if(o.comp && !COMPS.some(c=>c.toLowerCase()===o.comp.toLowerCase())){ COMPS.push(o.comp); saveComps() }
+  saveFix(); FXDEL=null; openCal(); toast('Partita salvata nel calendario.');
+}
+function askStartFix(id){
+  const f=FIX.find(x=>x.id===id); if(!f) return;
+  const inProg=!S.over&&(S.pts[0]||S.pts[1]||S.sets[0]||S.sets[1]);
+  if(!inProg){ startFixture(id); return }
+  showOv(`<h2>Iniziare questa partita?</h2><p>La partita in corso non e' finita e <b>non verra' salvata</b> nello storico.</p>
+    <button class="red" onclick="startFixture('${id}')">Si, inizia ${esc(f.opp)}</button><button class="grey" onclick="openCal()">Annulla</button>`);
+}
+function startFixture(id){
+  const f=FIX.find(x=>x.id===id); if(!f) return;
+  const our=S.names[S.home], sq=S.squad;
+  S=fresh([our,f.opp],S.cfg,S.colors); S.squad=sq;
+  S.comp=f.comp||''; S.round=f.round||''; S.venue=f.venue||''; S.fixId=f.id;
+  save(); closeOv(); toast('Partita pronta: '+our+' - '+f.opp+'. Scegli chi batte per primo e la formazione.');
+}
+function openCalSummary(){
+  const comps=Array.from(new Set(FIX.map(f=>f.comp||''))).filter(Boolean);
+  if(!FXCOMP && comps.length===1) FXCOMP=comps[0];
+  const list=FIX.filter(f=>(!FXCOMP||f.comp===FXCOMP)&&fxResult(f)).sort((a,b)=>fxWhen(a).localeCompare(fxWhen(b)));
+  let V=0,P=0,sf=0,sa=0,pf=0,pa=0,cl=0,ps=0;
+  const rows=list.map(f=>{
+    const r=fxResult(f); if(r.sf>r.sa) V++; else P++;
+    sf+=r.sf; sa+=r.sa;
+    if(r.sets.length){ r.sets.forEach(s=>{ pf+=s[0]; pa+=s[1] }); ps+=r.sets.length }
+    const p=fxPts(r); if(p!==null) cl+=p;
+    return `<tr><td style="text-align:left">${esc(f.round||'-')}</td><td style="text-align:left">${esc(f.opp)} ${vpill(f.venue)}</td><td><b style="color:${r.sf>r.sa?'var(--ok)':'var(--bad)'}">${r.sf}-${r.sa}</b></td>${CLMODE!=='none'?`<td>${fxPts(r)}</td>`:''}</tr>`;
+  }).join('');
+  const b=(m,l)=>`<button class="${CLMODE===m?'':'grey'}" onclick="setCLMode('${m}')">${l}</button>`;
+  const box=(v,t)=>`<div><b>${v}</b><span>${t}</span></div>`;
+  showOv(`<h2>Risultati e classifica</h2>${fxChips('openCalSummary()')}
+    ${list.length?`<div class="stat">${box(list.length,'Giocate')}${box(V,'Vinte')}${box(P,'Perse')}${box(sf,'Set vinti')}${box(sa,'Set persi')}${box(sf-sa,'Diff. set')}${ps?box(pf,'Punti fatti')+box(pa,'Punti subiti')+box(pf-pa,'Diff. punti'):''}${CLMODE!=='none'?box(cl,'Punti classifica'):''}</div>
+    <div class="anwrap"><table class="antab"><tr><th style="text-align:left">Giornata</th><th style="text-align:left">Avversario</th><th>Set</th>${CLMODE!=='none'?'<th>Punti</th>':''}</tr>${rows}</table></div>
+    ${ps&&ps<list.reduce((n,f)=>n+fxResult(f).sf+fxResult(f).sa,0)?'<p class="note">I punti fatti e subiti contano solo le partite di cui hai i punteggi dei set.</p>':''}`
+    :'<p class="note">Nessun risultato inserito. Aggiungi le partite gia\' giocate dal Calendario, anche solo con il risultato in set.</p>'}
+    <div class="lbl">Punti in classifica</div>
+    <div class="opt">${b('none','Non calcolare')}${b('fipav','3-0 e 3-1: 3, 3-2: 2, 2-3: 1')}${b('set','1 punto per set vinto')}</div>
+    <p class="note">Il conteggio e' solo per la nostra squadra: la classifica completa dipende dai risultati delle altre che l'app non conosce. Scegli la regola che usa il vostro campionato; la prima e' quella classica a 5 set, nell'under 11 puo' essere diversa.</p>
+    <button onclick="openCal()">Torna al calendario</button><button class="grey" onclick="closeOv()">Chiudi</button>`);
+}
 
 /* ---------- Menu a tendina ---------- */
 function closeDD(){ document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open')) }
@@ -1083,7 +1262,7 @@ const BKKEY='pallavolo_ultimo_backup';
 let BKSNOOZE=false, PERSIST=null;
 function lastBackup(){ try{ const v=localStorage.getItem(BKKEY); return v?new Date(v):null }catch(e){ return null } }
 function bkDays(){ const d=lastBackup(); return d?Math.floor((Date.now()-d.getTime())/86400000):null }
-function hasData(){ return HIST.length>0 || ROSTER.length>0 || FORMS.length>0 }
+function hasData(){ return HIST.length>0 || ROSTER.length>0 || FORMS.length>0 || FIX.length>0 }
 function updBkWarn(){
   const el=document.getElementById('bkwarn'); if(!el) return;
   const d=bkDays();
@@ -1613,7 +1792,7 @@ function doReset(){
   RESETARM=false; HIST=[]; saveHist(); histTab='list'; openHistory(); toast('Storico azzerato.');
 }
 function resetHistory(){ RESETARM=true; openHistory() }
-function delMatch(i){ if(DELARM!==i){ DELARM=i; RESETARM=false; openHistory(); return } DELARM=-1; HIST.splice(i,1); saveHist(); openHistory() }
+function delMatch(i){ if(DELARM!==i){ DELARM=i; RESETARM=false; openHistory(); return } DELARM=-1; { const m=HIST[i]; FIX.forEach(fx=>{ if(m&&fx.hist===m.date){ fx.res={sf:m.setsHome,sa:m.setsAway,sets:m.log.map(x=>[x.h,x.a])}; fx.hist='' } }); saveFix(); } HIST.splice(i,1); saveHist(); openHistory() }
 
 /* ---------- Backup ---------- */
 function allStore(){
@@ -1623,7 +1802,7 @@ function allStore(){
 }
 function backupHTML(){
   return `<p class="note">I dati sono salvati nella memoria di Safari. Se cancelli i dati del sito li perdi: fai ogni tanto un backup.</p>
-    <p class="note">Il backup contiene <b>tutto</b>: storico delle partite (${HIST.length}), rosa (${ROSTER.length}), formazioni salvate (${FORMS.length}), partita in corso, convocate, colori e impostazioni.</p>
+    <p class="note">Il backup contiene <b>tutto</b>: storico delle partite (${HIST.length}), rosa (${ROSTER.length}), formazioni salvate (${FORMS.length}), calendario del campionato (${FIX.length}), partita in corso, convocate, colori e impostazioni.</p>
     ${bkStatusHTML()}
     <button onclick="exportBackup()">Esporta backup</button>
     <button onclick="document.getElementById('imp').click()">Importa backup</button>
@@ -1660,7 +1839,7 @@ function importBackup(inp){
       const cnt=k=>{ try{ const x=JSON.parse(store[k]); return Array.isArray(x)?x.length:0 }catch(e){ return 0 } };
       PENDING=store;
       showOv(`<h2>Importare il backup?</h2>
-        <p>Nel file ci sono: <b>${cnt(HKEY)}</b> partite, <b>${cnt(RKEY)}</b> giocatrici, <b>${cnt(FKEY)}</b> formazioni${store.__legacy?' (backup vecchio: contiene solo storico e rosa)':''}.</p>
+        <p>Nel file ci sono: <b>${cnt(HKEY)}</b> partite, <b>${cnt(RKEY)}</b> giocatrici, <b>${cnt(FKEY)}</b> formazioni, <b>${cnt(FXKEY)}</b> partite in calendario${store.__legacy?' (backup vecchio: contiene solo storico e rosa)':''}.</p>
         <p class="note"><b>Attenzione:</b> i dati ${store.__legacy?'di storico e rosa':'di questo dispositivo, partita in corso compresa,'} verranno sostituiti da quelli del file. Se non sei sicura, annulla e prima esporta un backup di quello che hai ora.</p>
         <button class="red" onclick="applyImport()">Si, sostituisci</button><button class="grey" onclick="PENDING=null;openHistory()">Annulla</button>`);
     }catch(e){ toast('File di backup non valido.',true) }
