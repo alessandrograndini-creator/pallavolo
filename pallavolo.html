@@ -307,7 +307,7 @@ function fresh(names,cfg,colors){
     subs:[[],[]], subLog:[], tos:[0,0], pl:[], sv0:null,
     pts:[0,0], sets:[0,0], history:[], log:[], setNum:1, server:0,
     lineup:[ ['','','','','',''], ['1','2','3','4','5','6'] ],
-    pst:{}, pset:{}, run:0, cc:false, comp:((typeof S!=='undefined'&&S&&S.comp)||''), round:((typeof S!=='undefined'&&S&&S.round)||''), venue:((typeof S!=='undefined'&&S&&S.venue)||''),
+    pst:{}, pset:{}, psp:{}, run:0, cc:false, comp:((typeof S!=='undefined'&&S&&S.comp)||''), round:((typeof S!=='undefined'&&S&&S.round)||''), venue:((typeof S!=='undefined'&&S&&S.venue)||''),
     over:false, saved:false, date:new Date().toISOString()
   };
 }
@@ -338,6 +338,7 @@ function load(){
   if(S.cfg.wake===undefined) S.cfg.wake=true;
   if(!S.pst) S.pst={};
   if(!S.pset) S.pset={};
+  if(!S.psp) S.psp={};
   if(S.run===undefined) S.run=0;
   if(S.comp===undefined) S.comp='';
   if(S.venue===undefined) S.venue='';
@@ -395,7 +396,7 @@ function setWon(t){
    Se non era al servizio, il servizio passa a lei e la formazione ruota in senso orario. */
 function point(t){
   if(S.over) return;
-  S.history.push(JSON.stringify({pts:S.pts,server:S.server,lineup:S.lineup,subs:S.subs,bq:S.bq,pl:S.pl.length,sv0:S.sv0,pst:S.pst,pset:S.pset,run:S.run}));
+  S.history.push(JSON.stringify({pts:S.pts,server:S.server,lineup:S.lineup,subs:S.subs,bq:S.bq,pl:S.pl.length,sv0:S.sv0,pst:S.pst,pset:S.pset,psp:S.psp,run:S.run}));
   if(S.pl.length===0){ S.sv0=S.server; S.ts=Date.now(); S.lu0=S.lineup[S.home].slice(); S.bq0=benchOf(S.home) } // chi batte all'inizio del set e a che ora
   trackBefore(t);
   const wasSrv=S.server;
@@ -421,7 +422,7 @@ function point(t){
       else toast('Terza battuta di fila: cambio palla.');
     }
   }
-  trackAfter(wasSrv);
+  trackAfter(wasSrv,t);
   S.pl.push({t:t,a:S.pts[0],b:S.pts[1],side:side,fc:fc});
   if(setWon(t)) endSet(false,t);
   save(); render();
@@ -442,7 +443,7 @@ function autoRotate(t,outV){
 function undo(){
   if(!S.history.length) return;
   const p=JSON.parse(S.history.pop());
-  if(p.pst!==undefined){ S.pst=p.pst; S.pset=p.pset||{}; S.run=p.run||0 }
+  if(p.pst!==undefined){ S.pst=p.pst; S.pset=p.pset||{}; S.psp=p.psp||{}; S.run=p.run||0 }
   if(S.cc && Math.max(p.pts[0],p.pts[1])<ccAt()) S.cc=false;
   S.pts=p.pts; S.server=p.server; S.lineup=p.lineup; if(p.subs) S.subs=p.subs; if(p.bq) S.bq=p.bq;
   if(p.pl!==undefined){ S.pl=S.pl.slice(0,p.pl); S.sv0=(p.sv0===undefined?null:p.sv0) }
@@ -457,10 +458,10 @@ function endSet(manual,winner){
     w=S.pts[0]>S.pts[1]?0:1;
   }
   S.sets[w]++;
-  S.log.push({n:S.setNum,a:S.pts[0],b:S.pts[1],pl:S.pl,sv0:S.sv0,ts:S.ts||null,te:Date.now(),lu:S.lu0||null,bq:S.bq0||[],sb:subsOut(S.subs[S.home])});
+  S.log.push({n:S.setNum,a:S.pts[0],b:S.pts[1],pl:S.pl,sv0:S.sv0,ts:S.ts||null,te:Date.now(),lu:S.lu0||null,bq:S.bq0||[],sb:subsOut(S.subs[S.home]),ppl:(S.cfg.pstats?JSON.parse(JSON.stringify(S.psp||{})):null)});
   if(matchDecided()){ finishMatch(); return }
   const prevSv=S.sv0; // chi aveva battuto per primo nel set appena chiuso
-  S.setNum++; S.pts=[0,0]; S.history=[]; S.subs=[[],[]]; S.tos=[0,0]; S.pl=[]; S.sv0=null; S.ts=null; S.lu0=null; S.bq0=null; S.pset={}; S.run=0; S.cc=false; // cambi e timeout si azzerano a ogni set
+  S.setNum++; S.pts=[0,0]; S.history=[]; S.subs=[[],[]]; S.tos=[0,0]; S.pl=[]; S.sv0=null; S.ts=null; S.lu0=null; S.bq0=null; S.pset={}; S.psp={}; S.run=0; S.cc=false; // cambi e timeout si azzerano a ogni set
   S.server=(prevSv===0||prevSv===1)?1-prevSv:(w===0?1:0); // battuta alternata; prima del primo punto si puo' cambiare
   save(); render();
 }
@@ -480,7 +481,7 @@ function finishMatch(){
       comp:S.comp||'', round:S.round||'', venue:S.venue||'', pst:(S.cfg.pstats&&Object.keys(S.pst||{}).length)?JSON.parse(JSON.stringify(S.pst)):null, pn:pnMap(S.pst),
       // sv = chi batte per primo (0 = casa); pts = un numero per punto: (0 casa / 1 ospiti)*2 + (1 se e' cambio palla)
       log:S.log.map(x=>({n:x.n,h:h===0?x.a:x.b,a:h===0?x.b:x.a,
-        sv:(x.sv0==null?null:(x.sv0===h?0:1)), ts:x.ts||null, te:x.te||null, lu:x.lu||null, bq:x.bq||[], sb:x.sb||[],
+        sv:(x.sv0==null?null:(x.sv0===h?0:1)), ts:x.ts||null, te:x.te||null, lu:x.lu||null, bq:x.bq||[], sb:x.sb||[], pp:x.ppl||null,
         pts:(x.pl||[]).map(p=>((p.t===h?0:1)*2+(p.side?1:0)+(p.fc?4:0)))}))
     });
     saveHist();
@@ -657,7 +658,7 @@ function doSub(t,pos,inV){
   const outV=S.lineup[t][pos];
   const err=canSub(t,outV,inV);
   if(err){ toast(err,true); return false }
-  S.history.push(JSON.stringify({pts:S.pts,server:S.server,lineup:S.lineup,subs:S.subs,bq:S.bq,pl:S.pl.length,sv0:S.sv0,pst:S.pst,pset:S.pset,run:S.run}));
+  S.history.push(JSON.stringify({pts:S.pts,server:S.server,lineup:S.lineup,subs:S.subs,bq:S.bq,pl:S.pl.length,sv0:S.sv0,pst:S.pst,pset:S.pset,psp:S.psp,run:S.run}));
   const pairOut=S.subs[t].find(s=>s.in===outV && !s.done);
   if(pairOut && pairOut.out===inV){
     pairOut.done=true; // rientro: la coppia e' chiusa
@@ -817,7 +818,7 @@ function setPlayer(t,i,v){
 
 /* ---------- Versione e aggiornamenti ----------
    APP_VERSION va cambiata a ogni nuova versione del file: serve a capire quale versione sta girando. */
-const APP_VERSION='2026.11.02-b';
+const APP_VERSION='2026.11.03-a';
 let UPDAVAIL=false;
 function swReady(){ return !!(('serviceWorker' in navigator) && navigator.serviceWorker.controller && /^https?:$/.test(location.protocol)) }
 async function onlineVersion(){
@@ -963,23 +964,51 @@ function openColors(){
    Si registra da sole mentre si segna, senza nessun tocco in piu'. Per ogni giocatrice della rosa:
    sets = set in cui ha giocato, pp = punti giocati (scambi mentre era in campo), st = turni di battuta,
    ps = punti fatti mentre batteva, best = serie piu' lunga in un solo turno. */
-function pstat(id){ return S.pst[id]||(S.pst[id]={sets:0,pp:0,st:0,ps:0,best:0}) }
+function pstat(id){ return S.pst[id]||(S.pst[id]={sets:0,pp:0,pf:0,st:0,ps:0,t3:0,t0:0,best:0}) }
 function trackBefore(t){
   if(!S.cfg.pstats || !ROSTER.length) return;
   const hm=S.home, l=S.lineup[hm], srvId=idOfStr(l[5]);
   if(S.pl.length===0 && S.server===hm){ S.run=0; if(srvId) pstat(srvId).st++ }
-  l.forEach(v=>{ const id=idOfStr(v); if(!id) return; const p=pstat(id); p.pp++; if(!S.pset[id]){ S.pset[id]=1; p.sets++ } });
+  l.forEach(v=>{
+    const id=idOfStr(v); if(!id) return;
+    const p=pstat(id); p.pp++; if(t===hm) p.pf=(p.pf||0)+1;
+    S.psp[id]=(S.psp[id]||0)+1;
+    if(!S.pset[id]){ S.pset[id]=1; p.sets++ }
+  });
   if(S.server===hm){
-    if(t===hm){ S.run++; if(srvId){ const p=pstat(srvId); p.ps++; if(S.run>p.best) p.best=S.run } }
-    else S.run=0;
+    if(t===hm){
+      S.run++;
+      if(srvId){ const p=pstat(srvId); p.ps++; if(S.run>p.best) p.best=S.run; if(S.run===3) p.t3=(p.t3||0)+1 }
+    } else {
+      if(S.run===0 && srvId){ const p=pstat(srvId); p.t0=(p.t0||0)+1 }
+      S.run=0;
+    }
   }
 }
-function trackAfter(was){
+function trackAfter(was,t){
   if(!S.cfg.pstats || !ROSTER.length) return;
+  if(setWon(t)) return; // il punto chiude il set: nessun nuovo turno di battuta comincia
   const hm=S.home;
   if(S.server===hm && was!==hm){ S.run=0; const id=idOfStr(S.lineup[hm][5]); if(id) pstat(id).st++ }
 }
 function pnMap(pst){ const o={}; Object.keys(pst||{}).forEach(id=>{ const p=ROSTER.find(q=>q.id===id); if(p) o[id]=pstr(p) }); return o }
+const MINM=5; // partite minime per fidarsi del rendimento in campo
+function startPosHTML(sets){
+  const acc={}, add=(k,v)=>{ const a=acc[k]||(acc[k]={s:0,n:0}); a.s+=v; a.n++ };
+  let used=0;
+  sets.forEach(x=>{
+    if(!x.lu||!x.pp||!x.tot) return;
+    const ids=x.lu.map(v=>idOfStr(v)); used++;
+    x.lu.forEach((v,i)=>{ if(ids[i]) add(LBL[i],(x.pp[ids[i]]||0)/x.tot) });
+    Object.keys(x.pp).forEach(id=>{ if(!ids.includes(id)) add('B',x.pp[id]/x.tot) });
+  });
+  if(!used) return '';
+  const lab={'1':'Posizione 1 (in battuta)','2':'Posizione 2','3':'Posizione 3','4':'Posizione 4','5':'Posizione 5','6':'Posizione 6','B':'Parte in panchina'};
+  const rows=['1','2','3','4','5','6','B'].filter(k=>acc[k]).map(k=>{ const pc=Math.round(acc[k].s/acc[k].n*100); return `<tr><td style="text-align:left">${lab[k]}</td><td style="white-space:nowrap"><span class="pbar"><i style="width:${pc}%"></i></span>${pc}%</td><td>${acc[k].n}</td></tr>` }).join('');
+  return `<div class="lbl">Tempo in campo secondo la posizione di partenza</div>
+    <div class="anwrap"><table class="antab"><tr><th style="text-align:left">Parte in</th><th>Punti giocati del set</th><th>Volte</th></tr>${rows}</table></div>
+    <p class="note">Con il giro continuo, chi parte in posizione 2 esce al primo cambio palla e chi parte in 1 resta piu' a lungo. Se vuoi un minutaggio equo, fai ruotare tra un set e l'altro (o una partita e l'altra) chi parte in 1 e in 2. Dati su ${used} set.</p>`;
+}
 let PSTAB='match', PSCOMP='';
 function pName(id,pn){ const p=ROSTER.find(q=>q.id===id); return p?pstr(p).trim():(((pn&&pn[id])||id)+'').trim() }
 function openPStats(){
@@ -987,32 +1016,43 @@ function openPStats(){
     showOv(`<h2>Statistiche giocatrici</h2><p>Questa funzione e' spenta. Accesa, registra da sola minutaggio e battute, senza tocchi in piu'.</p>
       <button onclick="setCfg('pstats',true);openPStats()">Accendi</button><button class="grey" onclick="closeOv()">Chiudi</button>`); return }
   const t=(id,l)=>`<button class="${PSTAB===id?'on':'grey'}" onclick="PSTAB='${id}';openPStats()">${l}</button>`;
-  let rows=[], total=0, extra='';
+  let rows=[], extra='', sets=[];
+  const blank=()=>({sets:0,pp:0,pf:0,st:0,ps:0,t3:0,t0:0});
   if(PSTAB==='match'){
-    total=S.log.reduce((n,x)=>n+x.a+x.b,0)+S.pts[0]+S.pts[1];
+    const total=S.log.reduce((n,x)=>n+x.a+x.b,0)+S.pts[0]+S.pts[1];
     const ids=new Set(pool().map(p=>p.id)); Object.keys(S.pst||{}).forEach(id=>ids.add(id));
-    rows=Array.from(ids).map(id=>Object.assign({id:id,name:pName(id),m:1,tot:total},S.pst[id]||{sets:0,pp:0,st:0,ps:0,best:0}));
+    rows=Array.from(ids).map(id=>{ const p=S.pst[id]||blank(); return {id:id,name:pName(id),m:1,mf:(p.pf!==undefined?1:0),tot:total,sets:p.sets,pp:p.pp,pf:p.pf,ppf:p.pp,st:p.st,ps:p.ps,t3:p.t3,t0:p.t0} });
+    sets=S.log.map(x=>({lu:x.lu,pp:x.ppl,tot:x.a+x.b}));
   } else {
     const comps=Array.from(new Set(HIST.filter(m=>m.pst).map(m=>m.comp||''))).filter(Boolean);
     if(PSCOMP && !comps.includes(PSCOMP)) PSCOMP='';
     extra=comps.length?`<div class="opt"><button class="${!PSCOMP?'':'grey'}" onclick="PSCOMP='';openPStats()">Tutte</button>${comps.map(c=>`<button class="${PSCOMP===c?'':'grey'}" onclick="PSCOMP=this.dataset.c;openPStats()" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>`:'';
-    const agg={};
-    HIST.filter(m=>m.pst && (!PSCOMP||m.comp===PSCOMP)).forEach(m=>{
+    const agg={}, ms=HIST.filter(m=>m.pst && (!PSCOMP||m.comp===PSCOMP));
+    ms.forEach(m=>{
       const tot=m.log.reduce((n,x)=>n+x.h+x.a,0);
       Object.keys(m.pst).forEach(id=>{
-        const p=m.pst[id], a=agg[id]||(agg[id]={id:id,name:pName(id,m.pn),m:0,tot:0,sets:0,pp:0,st:0,ps:0,best:0});
-        a.m++; a.tot+=tot; a.sets+=p.sets; a.pp+=p.pp; a.st+=p.st; a.ps+=p.ps; if(p.best>a.best) a.best=p.best;
+        const p=m.pst[id], a=agg[id]||(agg[id]={id:id,name:pName(id,m.pn),m:0,mf:0,tot:0,sets:0,pp:0,pf:null,ppf:0,st:0,ps:0,t3:null,t0:null});
+        a.m++; a.tot+=tot; a.sets+=p.sets; a.pp+=p.pp; a.st+=p.st; a.ps+=p.ps;
+        if(p.pf!==undefined){ a.pf=(a.pf||0)+p.pf; a.ppf+=p.pp; a.mf++ }
+        if(p.t3!==undefined){ a.t3=(a.t3||0)+p.t3; a.t0=(a.t0||0)+(p.t0||0) }
       });
+      m.log.forEach(x=>sets.push({lu:x.lu,pp:x.pp,tot:x.h+x.a}));
     });
     rows=Object.values(agg);
   }
   rows.sort((a,b)=>(parseInt(a.name)||999)-(parseInt(b.name)||999));
-  const hist=PSTAB!=='match';
-  const body=rows.length?`<div class="anwrap"><table class="antab"><tr><th style="text-align:left">Giocatrice</th>${hist?'<th>Partite</th>':''}<th>Set</th><th>Punti giocati</th><th>Presenza</th><th>Turni batt.</th><th>Punti in batt.</th><th>Serie max</th></tr>
-    ${rows.map(r=>{ const pc=r.tot?Math.round(r.pp/r.tot*100):0; return `<tr><td style="text-align:left"><b>${esc(r.name)}</b></td>${hist?`<td>${r.m}</td>`:''}<td>${r.sets}</td><td>${r.pp}</td><td style="white-space:nowrap"><span class="pbar"><i style="width:${pc}%"></i></span>${pc}%</td><td>${r.st}</td><td>${r.ps}</td><td>${r.best}</td></tr>` }).join('')}</table></div>`
+  const hist=PSTAB!=='match', dash=v=>(v===null||v===undefined)?'-':v;
+  const perf=r=>{
+    if(r.pf===null||r.pf===undefined||!r.ppf) return '-';
+    if(r.mf<MINM) return `<span style="color:var(--muted)">pochi dati</span>`;
+    const d=(2*r.pf-r.ppf)/r.ppf*25; return (d>=0?'+':'')+d.toFixed(1);
+  };
+  const body=rows.length?`<div class="anwrap"><table class="antab"><tr><th style="text-align:left">Giocatrice</th>${hist?'<th>Partite</th>':''}<th>Set</th><th>Punti giocati</th><th>Presenza</th><th>Turni batt.</th><th>Punti batt.</th><th>Turni da 3</th><th>Turni a 0</th><th>Rendimento</th></tr>
+    ${rows.map(r=>{ const pc=r.tot?Math.round(r.pp/r.tot*100):0; return `<tr><td style="text-align:left"><b>${esc(r.name)}</b></td>${hist?`<td>${r.m}</td>`:''}<td>${r.sets}</td><td>${r.pp}</td><td style="white-space:nowrap"><span class="pbar"><i style="width:${pc}%"></i></span>${pc}%</td><td>${r.st}</td><td>${r.ps}</td><td>${dash(r.t3)}</td><td>${dash(r.t0)}</td><td>${perf(r)}</td></tr>` }).join('')}</table></div>`
     :`<p class="note">${hist?'Nessun dato: le statistiche si registrano dalle partite giocate dopo questo aggiornamento, quando la funzione e\' accesa.':'Ancora nessun punto in questa partita.'}</p>`;
   showOv(`<h2>Statistiche giocatrici</h2><div class="tabs">${t('match','Partita in corso')}${t('hist','Storico')}</div>${extra}${body}
-    <p class="note"><b>Presenza</b>: punti giocati sul totale dei punti della partita. <b>Turni</b>: volte che ha preso la battuta. <b>Punti in batt.</b>: punti fatti mentre batteva. <b>Serie max</b>: punti di fila piu' lunghi in un solo turno di battuta. Valgono per la squadra con la rosa; le partite salvate prima dell'aggiornamento non hanno questi dati.</p>
+    <p class="note"><b>Presenza</b>: punti giocati sul totale dei punti. <b>Turni batt.</b>: volte che ha preso la battuta. <b>Punti batt.</b>: punti fatti mentre batteva. <b>Turni da 3</b>: turni chiusi con almeno 3 punti di fila. <b>Turni a 0</b>: ha perso la battuta al primo servizio. <b>Rendimento</b>: punti fatti meno subiti dalla squadra mentre lei giocava, ogni 25 punti. Compare solo dopo ${MINM} partite: prima e' piu' casualita' che bravura, perche' dipende da quando entra e da chi e' in campo con lei. Usalo come indizio, mai per escludere una giocatrice.</p>
+    ${startPosHTML(sets)}
     <button class="grey" onclick="closeOv()">Chiudi</button>`);
 }
 
@@ -1787,15 +1827,16 @@ function matchPDF(M){
       need(70);
       text(MG,y-11,11,'Giocatrici',true); y-=16;
       const ptot=M.sets.reduce((n,x)=>n+x.a+x.b,0)||1;
-      const pc=[[MG,150],[MG+150,40],[MG+190,70],[MG+260,60],[MG+320,70],[MG+390,70],[MG+460,55]];
-      cells(pc,['Giocatrice','Set','Punti giocati','Presenza','Turni battuta','Punti in battuta','Serie max'],8,()=>true,9);
+      const pc=[[MG,125],[MG+125,28],[MG+153,62],[MG+215,52],[MG+267,62],[MG+329,62],[MG+391,62],[MG+453,62]];
+      cells(pc,['Giocatrice','Set','Punti giocati','Presenza','Turni batt.','Punti batt.','Turni da 3','Turni a 0'],8,()=>true,9);
       y-=13; hline(y);
       Object.keys(M.pst).map(id=>({n:pName(id,M.pn),p:M.pst[id]})).sort((a,b)=>(parseInt(a.n)||999)-(parseInt(b.n)||999)).forEach(r=>{
         need(18);
-        cells(pc,[r.n,String(r.p.sets),String(r.p.pp),Math.round(r.p.pp/ptot*100)+'%',String(r.p.st),String(r.p.ps),String(r.p.best)],9,i=>i===0,11);
+        const dd=v=>(v===undefined||v===null)?'-':String(v);
+        cells(pc,[r.n,String(r.p.sets),String(r.p.pp),Math.round(r.p.pp/ptot*100)+'%',String(r.p.st),String(r.p.ps),dd(r.p.t3),dd(r.p.t0)],9,i=>i===0,11);
         y-=15; hline(y);
       });
-      para('Presenza = punti giocati sul totale dei punti della partita. Turni = volte che ha preso la battuta. Punti in battuta = punti fatti mentre batteva.',8.5,GR,10);
+      para('Presenza = punti giocati sul totale dei punti. Turni batt. = volte che ha preso la battuta. Turni da 3 = turni chiusi con almeno 3 punti di fila. Turni a 0 = battuta persa al primo servizio.',8.5,GR,10);
     }
 
     // cronologia dei punti
