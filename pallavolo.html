@@ -34,7 +34,10 @@ button{font-family:inherit;cursor:pointer}
 .hint{font-size:13px;color:var(--muted);margin-top:-4px;padding-bottom:6px}
 .serve{height:30px;margin:10px 0 4px;font-size:16px;font-weight:800;color:var(--accent)}
 .serve span{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:5px 14px;border-radius:999px}
-.chip .qn{display:inline-block;min-width:20px;height:20px;line-height:20px;border-radius:50%;background:rgba(0,0,0,.28);font-style:normal;font-size:12px;text-align:center;margin-right:6px}
+.chip .qn{display:inline-block;min-width:24px;height:24px;line-height:24px;border-radius:50%;background:#fff;color:#111;font-style:normal;font-weight:900;font-size:14px;text-align:center;margin-right:7px}
+.chip.next{outline:3px solid var(--ok);outline-offset:1px}
+.main.flip{flex-direction:row-reverse!important}
+.bnext{font-size:13px;margin:0 0 6px;color:var(--muted)}.bnext b{color:var(--text)}
 .chip.dropchip{outline:3px solid var(--ok)}
 .bar{display:flex;gap:10px;padding:0 14px 16px}
 .bar button{flex:1;font-size:17px;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--text);font-weight:700}
@@ -263,6 +266,7 @@ details.grp>.gin{padding:0 14px 12px}
     <div class="dd"><button class="ddb" onclick="toggleDD(this)">Partita</button><div class="ddp">
       <button onclick="closeDD();openComp()">Competizione e sede</button>
       <button onclick="closeDD();openBoard()">Tabellone</button>
+      <button onclick="closeDD();toggleView()">Ruota vista campo</button>
       <button onclick="closeDD();openSummary()">Riepilogo</button>
       <button onclick="closeDD();newMatch()">Nuova partita</button></div></div>
     <div class="dd"><button class="ddb" onclick="toggleDD(this)">Campionato</button><div class="ddp">
@@ -583,13 +587,18 @@ function tokHTML(t,label){
 /* Il campo visto dall'alto: a sinistra la squadra 0, a destra la squadra 1, rete solo in mezzo al campo.
    Ogni squadra guarda la rete: a sinistra davanti 4-3-2 e dietro 5-6-1, a destra davanti 2-3-4 e dietro 1-6-5.
    La riga di fondo e' nella zona dietro la linea dei 3 metri, quella davanti subito vicino alla rete. */
+/* Vista del campo: 'bench' = come lo vede chi sta dal lato della panchina; 'opp' = ruotato di 180 gradi,
+   come lo vede chi sta sugli spalti opposti; 'away' = ruotato solo nelle partite fuori casa. */
+function flipped(){ const m=S.cfg.view||'bench'; return m==='opp'||(m==='away'&&S.venue==='fuori') }
 function halfHTML(t){
-  const rows=t===0?[['5','4'],['6','3'],['1','2']]:[['2','1'],['3','6'],['4','5']];
-  return `<div class="hf h${t}">${rows.map(r=>r.map(l=>tokHTML(t,l)).join('')).join('')}</div>`;
+  const sd=flipped()?1-t:t; // ruotando di 180 gradi ogni squadra passa dall'altra parte e il suo schema si specchia
+  const rows=sd===0?[['5','4'],['6','3'],['1','2']]:[['2','1'],['3','6'],['4','5']];
+  return `<div class="hf h${sd}">${rows.map(r=>r.map(l=>tokHTML(t,l)).join('')).join('')}</div>`;
 }
 function pitchHTML(){
   const lab=t=>`<span style="--tc:${teamColor(t)}">${esc(S.names[t])}</span>`;
-  return `<div class="pitch"><div class="plabels">${lab(0)}${lab(1)}</div><div class="zone"><div class="floor">${halfHTML(0)}<div class="netc" title="Rete"></div>${halfHTML(1)}</div></div>${benchHTML(S.home)}</div>`;
+  const o=flipped()?[1,0]:[0,1];
+  return `<div class="pitch"><div class="plabels">${lab(o[0])}${lab(o[1])}</div><div class="zone"><div class="floor">${halfHTML(o[0])}<div class="netc" title="Rete"></div>${halfHTML(o[1])}</div></div>${benchHTML(S.home)}</div>`;
 }
 /* ---- Animazione: i dischetti si spostano da una posizione all'altra (tecnica FLIP) ---- */
 function snapCourt(){
@@ -700,9 +709,10 @@ function benchHTML(t){
   const chips=benchOf(t).map((v,n)=>{
     const st=S.subs[t].find(s=>s.out===v && !s.done);
     const closed=S.subs[t].find(s=>s.out===v && s.done);
-    return `<span class="chip ${closed?'off':''} ${(selChip&&selChip.v===v)?'sel':''}" data-t="${t}" data-v="${esc(v)}" onpointerdown="dragDown(event)" title="${st?'Puo\' rientrare solo al posto di '+esc(st.in):''}"><i class="qn">${n+1}</i>${esc(v)}</span>`;
+    return `<span class="chip ${closed?'off':''} ${(selChip&&selChip.v===v)?'sel':''} ${(S.cfg.autoRot&&n===0)?'next':''}" data-t="${t}" data-v="${esc(v)}" onpointerdown="dragDown(event)" title="${st?'Puo\' rientrare solo al posto di '+esc(st.in):''}"><i class="qn">${n+1}</i>${esc(v)}</span>`;
   }).join('');
-  return `<div class="bench" data-t="${t}"><h4><span>${S.cfg.autoRot?'PANCHINA - ordine di ingresso (trascina)':'PANCHINA - trascina in campo o riordina'}</span><span>Cambi ${subsUsed(t)}/${S.cfg.maxSubs}</span></h4><div class="chips">${chips||(pool().length?'<small class="note">Nessuna in panchina.</small>':'<small class="note">Nessuna convocata: tocca Convocate in alto e scegli chi gioca.</small>')}</div></div>`;
+  const bl=benchOf(t), nx=(S.cfg.autoRot&&bl.length&&S.lineup[t][2])?`<p class="bnext">Al prossimo cambio palla entra <b>${esc(bl[0])}</b> in posizione 1 al posto di <b>${esc(S.lineup[t][2])}</b> (che va in fondo alla panchina).</p>`:'';
+  return `<div class="bench" data-t="${t}">${nx}<h4><span>${S.cfg.autoRot?'PANCHINA - numero = ordine di ingresso (trascina)':'PANCHINA - trascina in campo o riordina'}</span><span>Cambi ${subsUsed(t)}/${S.cfg.maxSubs}</span></h4><div class="chips">${chips||(pool().length?'<small class="note">Nessuna in panchina.</small>':'<small class="note">Nessuna convocata: tocca Convocate in alto e scegli chi gioca.</small>')}</div></div>`;
 }
 /* Trascinamento con il dito (pointer events): funziona su iPad senza librerie.
    Si trascina: una panchinara sul campo (inserisce o cambia), una titolare su un'altra titolare (scambia le posizioni
@@ -839,7 +849,7 @@ function setPlayer(t,i,v){
 
 /* ---------- Versione e aggiornamenti ----------
    APP_VERSION va cambiata a ogni nuova versione del file: serve a capire quale versione sta girando. */
-const APP_VERSION='2026.11.03-c';
+const APP_VERSION='2026.11.04-a';
 let UPDAVAIL=false;
 function swReady(){ return !!(('serviceWorker' in navigator) && navigator.serviceWorker.controller && /^https?:$/.test(location.protocol)) }
 async function onlineVersion(){
@@ -1418,6 +1428,7 @@ function render(){
   applyColors();
   document.getElementById('title').textContent=
     S.over?'Partita terminata':'Set '+S.setNum+' di '+S.cfg.bestOf+' - a '+target();
+  document.querySelector('.main').classList.toggle('flip',flipped());
   document.getElementById('t0').innerHTML=teamHTML(0);
   document.getElementById('t1').innerHTML=teamHTML(1);
   const pw=document.getElementById('pitchwrap');
@@ -1457,6 +1468,9 @@ function openSettings(){
   const campo=`
     <div class="lbl">Giocatrici in campo</div>
     <div class="opt">${b(S.cfg.showCourt!==false,'Mostra le sei posizioni','setCfg(\'showCourt\',true)')}${b(S.cfg.showCourt===false,'Nascondi (si gira con tutte)','setCfg(\'showCourt\',false)')}</div>
+    <div class="lbl">Vista del campo</div>
+    <div class="opt">${b((S.cfg.view||'bench')==='bench','Dalla panchina',"setCfg('view','bench')")}${b(S.cfg.view==='opp','Dagli spalti opposti',"setCfg('view','opp')")}${b(S.cfg.view==='away','Ruotata fuori casa',"setCfg('view','away')")}</div>
+    <p class="note">Il campo e' visto dall'alto. "Dagli spalti opposti" lo ruota di 180 gradi, cosi' le giocatrici sono dove le vedi tu se stai dall'altra parte del campo rispetto alla panchina. Ruotano anche i due pannelli del punteggio, per non sbagliare squadra. "Ruotata fuori casa" la gira da sola quando la partita e' segnata fuori casa.</p>
     <div class="lbl">Giro continuo con panchina (under 11)</div>
     <div class="opt">${b(!S.cfg.autoRot,'No, cambi a mano','setCfg(\'autoRot\',false)')}${b(S.cfg.autoRot,'Si, entrano in ordine','setCfg(\'autoRot\',true)')}</div>
     <p class="note">Con il giro continuo, ogni volta che la squadra di casa conquista la battuta e gira, chi era in posizione 2 esce in fondo alla panchina e la prima della lista entra in posizione 1, in battuta. Non conta come cambio. L'ordine si decide trascinando i nomi in panchina.</p>
@@ -1500,6 +1514,7 @@ function colorRow(t){
     <div class="opt">${sw}<input type="color" value="${teamColor(t)}" onchange="setColor(${t},this.value)"><button class="${cur?'grey':''}" onclick="setColor(${t},null)">Predefinito</button></div>`;
 }
 function setColor(t,c){ S.colors[t]=c; save(); render(); openColors() }
+function toggleView(){ S.cfg.view=flipped()?'bench':'opp'; save(); render(); toast(flipped()?'Vista dagli spalti opposti (campo ruotato).':'Vista dalla panchina.') }
 function setCfg(k,v){
   S.cfg[k]=v; save(); if(k==='wake') wakeOn();
   // se cambiando formato i set vinti bastano gia' per chiudere la partita, la chiudiamo
